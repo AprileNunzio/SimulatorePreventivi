@@ -58,69 +58,6 @@ const { setupIpcHandlers } = require('./backend/ipc-handlers');
 
 let mainWindow;
 
-// ─── AUTO-UPDATER SETUP ─────────────────────────────────────────────────────
-function setupAutoUpdater() {
-  // In sviluppo non fare nulla
-  if (!app.isPackaged) return;
-
-  autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
-
-  // Configurazione GitHub (corrisponde al package.json build.publish)
-  autoUpdater.setFeedURL({
-    provider: 'github',
-    owner: 'AprileNunzio',
-    repo: 'SimulatorePreventivi',
-  });
-
-  // Controlla aggiornamenti all'avvio (dopo 5 secondi)
-  setTimeout(() => {
-    autoUpdater.checkForUpdates().catch(err => {
-      console.log('[Updater] Controllo aggiornamenti non riuscito:', err.message);
-    });
-  }, 5000);
-
-  // Controlla ogni 4 ore
-  setInterval(() => {
-    autoUpdater.checkForUpdates().catch(() => {});
-  }, 4 * 60 * 60 * 1000);
-
-  // ─── EVENTI UPDATER ─────────────────────────────────────────────────────
-  autoUpdater.on('checking-for-update', () => {
-    console.log('[Updater] Controllo aggiornamenti...');
-    mainWindow?.webContents.send('update:checking');
-  });
-
-  autoUpdater.on('update-available', (info) => {
-    console.log('[Updater] Aggiornamento disponibile:', info.version);
-    mainWindow?.webContents.send('update:available', {
-      version: info.version,
-      releaseDate: info.releaseDate,
-      releaseNotes: info.releaseNotes,
-    });
-  });
-
-  autoUpdater.on('update-not-available', () => {
-    console.log('[Updater] App aggiornata.');
-    mainWindow?.webContents.send('update:not-available');
-  });
-
-  autoUpdater.on('download-progress', (progress) => {
-    mainWindow?.webContents.send('update:progress', {
-      percent: Math.round(progress.percent),
-      transferred: progress.transferred,
-      total: progress.total,
-      bytesPerSecond: progress.bytesPerSecond,
-    });
-  });
-
-  autoUpdater.on('update-downloaded', (info) => {
-    console.log('[Updater] Download completato:', info.version);
-    mainWindow?.webContents.send('update:downloaded', { version: info.version });
-  });
-
-  autoUpdater.on('error', (err) => {
-    console.error('[Updater] Errore:', err.message);
     mainWindow?.webContents.send('update:error', err.message);
   });
 }
@@ -338,8 +275,6 @@ app.whenReady().then(async () => {
   setupIpcHandlers(ipcMain);
   setupUpdaterIpc();
   createWindow();
-  setupAutoUpdater();
-
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
