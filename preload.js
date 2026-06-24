@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  getVersion: () => ipcRenderer.invoke('app:version'),
   
   // ─── PREVENTIVI ──────────────────────────────────────────────────────────
   getPreventivi: (filters) => ipcRenderer.invoke('db:preventivi:getAll', filters),

@@ -127,36 +127,96 @@ function setupAutoUpdater() {
 
 // ─── IPC UPDATER HANDLERS ───────────────────────────────────────────────────
 function setupUpdaterIpc() {
-  ipcMain.handle('update:download', async (e, version) => {
-    try {
-      // Invece di usare electron-updater (che si blocca per via del controllo firma),
-      // apriamo direttamente il link di download nel browser predefinito dell'utente
-      // e chiudiamo l'app, così l'utente può installare il nuovo exe pulito.
-      const url = `https://github.com/AprileNunzio/SimulatorePreventivi/releases/download/v${version}/Simulatore-Preventivi-Setup-${version}.exe`;
-      require('electron').shell.openExternal(url);
-      
-      // Chiudiamo l'app dopo 3 secondi per permettere l'installazione manuale
-      setTimeout(() => {
-        app.quit();
-      }, 3000);
-      
-      return { success: true };
-    } catch (e) {
-      return { success: false, error: e.message };
-    }
-  });
-
-  ipcMain.handle('update:install', async () => {
-    autoUpdater.quitAndInstall(false, true);
-  });
-
   ipcMain.handle('update:check-manual', async () => {
     try {
       if (!app.isPackaged) {
         return { success: false, message: 'Auto-update disponibile solo nella versione installata.' };
       }
-      const result = await autoUpdater.checkForUpdates();
-      return { success: true };
+      
+      const currentVersion = app.getVersion();
+      const options = {
+        hostname: 'api.github.com',
+        path: '/repos/AprileNunzio/SimulatorePreventivi/releases/latest',
+        method: 'GET',
+        headers: { 'User-Agent': 'SimulatorePreventivi-Updater' }
+      };
+
+      return new Promise((resolve) => {
+        require('https').get(options, (res) => {
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => {
+            try {
+              const release = JSON.parse(data);
+              const latestVersion = release.tag_name ? release.tag_name.replace('v', '') : '';
+              
+              if (latestVersion && latestVersion !== currentVersion) {
+                resolve({ success: true, hasUpdate: true, version: latestVersion });
+              } else {
+                resolve({ success: true, hasUpdate: false });
+              }
+            } catch (err) {
+              resolve({ success: false, error: 'Errore nel parsing della release' });
+            }
+          });
+        }).on('error', (err) => {
+          resolve({ success: false, error: err.message });
+        });
+      });
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+
+  ipcMain.handle('update:download', async (e, version) => {
+    try {
+      const https = require('https');
+      const fs = require('fs');
+      const path = require('path');
+      const { shell } = require('electron');
+
+      const fileName = `Simulatore-Preventivi-Setup-${version}.exe`;
+      const downloadPath = path.join(app.getPath('downloads'), fileName);
+      const url = `https://github.com/AprileNunzio/SimulatorePreventivi/releases/download/v${version}/${fileName}`;
+
+      return new Promise((resolve) => {
+        // Funzione helper per seguire i redirect (GitHub usa 302 per gli asset)
+        function downloadFile(fileUrl) {
+          https.get(fileUrl, (res) => {
+            if (res.statusCode === 301 || res.statusCode === 302) {
+              return downloadFile(res.headers.location);
+            }
+            
+            const totalBytes = parseInt(res.headers['content-length'], 10);
+            let receivedBytes = 0;
+            
+            const fileStream = fs.createWriteStream(downloadPath);
+            res.pipe(fileStream);
+
+            res.on('data', (chunk) => {
+              receivedBytes += chunk.length;
+              if (totalBytes) {
+                const percentage = Math.round((receivedBytes / totalBytes) * 100);
+                if (mainWindow) {
+                  mainWindow.webContents.send('update:progress', { percent: percentage });
+                }
+              }
+            });
+
+            fileStream.on('finish', () => {
+              fileStream.close(() => {
+                shell.openPath(downloadPath);
+                setTimeout(() => app.quit(), 2000);
+                resolve({ success: true });
+              });
+            });
+          }).on('error', (err) => {
+            resolve({ success: false, error: err.message });
+          });
+        }
+
+        downloadFile(url);
+      });
     } catch (e) {
       return { success: false, error: e.message };
     }
