@@ -64,7 +64,21 @@ export default {
           <span class="riepilogo-value">${fmt.euro(prev.totale_ivato)}</span>
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%; margin-top:16px;" onclick="PreventivoDetail.sendEmailModal(${prev.id})">Invia Preventivo via Email</button>
+      
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+        <button class="btn btn-secondary" style="width:100%; justify-content:center; padding:10px;" onclick="PreventivoDetail.recalculate(${prev.id})">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:6px">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Forza Ricalcolo
+        </button>
+        <button class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;" onclick="PreventivoDetail.sendEmailModal(${prev.id})">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:6px">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          Invia Preventivo via Email
+        </button>
+      </div>
     `;
   }
 };

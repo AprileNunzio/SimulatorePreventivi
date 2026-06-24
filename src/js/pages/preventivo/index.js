@@ -66,6 +66,14 @@ export default {
     return CollaboratoriManager._showEditCollabModal.call(this, a, prevId);
   },
 
+  async recalculate(prevId) {
+    const res = await window.electronAPI.ricalcolaPreventivo(prevId);
+    if (res.success) {
+      // Reload UI
+      this.render(document.getElementById('main-content'), { id: prevId, mode: 'view' });
+    }
+  },
+
   openDocModal(prevId) {
     return ActionModals.openDocModal.call(this, prevId);
   },

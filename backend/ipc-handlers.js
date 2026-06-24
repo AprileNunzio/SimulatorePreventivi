@@ -121,20 +121,24 @@ function setupIpcHandlers(ipcMain) {
 
   });
   ipcMain.handle('db:preventivi:delete', async (e, id) => {
-
     try {
-
       return await db.deletePreventivo(id);
-
     } catch (err) {
-
       logger.error('Error in db:preventivi:delete', err.stack);
-
       return { success: false, error: err.message };
-
     }
-
   });
+
+  ipcMain.handle('db:preventivi:ricalcola', async (e, id) => {
+    try {
+      db.ricalcolaPreventivo(id);
+      return { success: true };
+    } catch (err) {
+      logger.error('Error in db:preventivi:ricalcola', err.stack);
+      return { success: false, error: err.message };
+    }
+  });
+
 
   // ─── VOCI ────────────────────────────────────────────────────────────────
   ipcMain.handle('db:voci:getAll', async (e, preventivoId) => {
