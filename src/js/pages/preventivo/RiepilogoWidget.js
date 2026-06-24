@@ -5,18 +5,23 @@ export default {
     const r = el.querySelector('#riepilogo-content');
     if (!r) return;
     
-    // Calcolo costo del lavoro dalle assegnazioni
+    // Calcolo costo e vendita del lavoro dalle assegnazioni
     const costoLavoro = (prev.assegnazioni || []).reduce((acc, a) => acc + (parseFloat(a.compenso_calcolato) || 0), 0);
     const venditaLavoro = (prev.assegnazioni || []).reduce((acc, a) => acc + (parseFloat(a.prezzo_al_cliente) || 0), 0);
     
-    const costoTotaleReale = parseFloat(prev.totale_costo) || 0;
-    const costoMateriali = costoTotaleReale - costoLavoro;
+    // Calcolo costo e vendita materiali dalle voci
+    const costoMateriali = (prev.voci || []).reduce((acc, v) => acc + (((parseFloat(v.prezzo_acquisto) || 0) + (parseFloat(v.spese_accessorie) || 0)) * (parseFloat(v.quantita) || 1)), 0);
+    const venditaMateriali = (prev.voci || []).reduce((acc, v) => acc + (parseFloat(v.totale_voce) || 0), 0);
     
-    const imponibile = parseFloat(prev.totale_imponibile) || 0;
-    const venditaMateriali = imponibile - venditaLavoro;
+    // Differenze
     const differenzaMateriali = venditaMateriali - costoMateriali;
+    const differenzaLavoro = venditaLavoro - costoLavoro;
     
-    const margineEuroNetto = parseFloat(prev.margine_euro) || (imponibile - costoTotaleReale);
+    // Margine netto stimato: Somma dei guadagni su materiali e collaboratori
+    const margineEuroNetto = differenzaMateriali + differenzaLavoro;
+    
+    // Imponibile e totali (dovrebbero già corrispondere, ma calcoliamo per sicurezza)
+    const imponibile = venditaMateriali + venditaLavoro;
     const marginePctNetto = imponibile > 0 ? (margineEuroNetto / imponibile) * 100 : 0;
     
     const mClass = marginePctNetto >= 30 ? 'margine-good' : marginePctNetto >= 15 ? 'margine-mid' : 'margine-bad';
