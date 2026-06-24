@@ -1,137 +1,82 @@
 // src/js/pages/collaboratore-detail.js
 
-import { toast as showToast } from '../utils.js';
+import { Modal, toast as showToast, fmt } from '../utils.js';
 
 let currentChart = null;
 let currentCollaboratoreId = null;
 
-// Template HTML del Modal FullScreen
-function getTemplate() {
+function getModalBody() {
   return `
-    <div id="collaboratore-detail-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center z-50 animate-fade-in hidden">
-      <div class="bg-white dark:bg-slate-800 w-full max-w-6xl h-full sm:h-[90vh] sm:rounded-xl shadow-2xl flex flex-col overflow-hidden animate-slide-up relative">
-        
-        <!-- Header -->
-        <header class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-between items-center shrink-0">
-          <div>
-            <h2 id="cd-nome" class="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-              <span class="material-icons text-blue-600">person</span>
-              <span id="cd-nome-text">Caricamento...</span>
-            </h2>
-            <p id="cd-ruolo" class="text-sm text-slate-500 dark:text-slate-400 mt-1"></p>
-          </div>
-          <button id="cd-close-btn" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-800 rounded-full transition-colors">
-            <span class="material-icons">close</span>
-          </button>
-        </header>
-
-        <!-- Body Scrollable -->
-        <div class="flex-1 overflow-y-auto p-6 bg-slate-100 dark:bg-slate-800">
-          
-          <!-- Sezione KPI -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-              <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
-                  <span class="material-icons">payments</span>
-                </div>
-                <h3 class="text-slate-500 dark:text-slate-400 font-medium">Totale Maturato</h3>
-              </div>
-              <p id="cd-totale-maturato" class="text-3xl font-bold text-slate-800 dark:text-white">€ 0,00</p>
-              <p class="text-xs text-emerald-500 mt-2 font-medium">Fatturato incassato con successo</p>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-              <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600">
-                  <span class="material-icons">hourglass_empty</span>
-                </div>
-                <h3 class="text-slate-500 dark:text-slate-400 font-medium">Totale In Attesa</h3>
-              </div>
-              <p id="cd-totale-attesa" class="text-3xl font-bold text-slate-800 dark:text-white">€ 0,00</p>
-              <p class="text-xs text-amber-500 mt-2 font-medium">Preventivi accettati ma non saldati</p>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-              <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
-                  <span class="material-icons">percent</span>
-                </div>
-                <h3 class="text-slate-500 dark:text-slate-400 font-medium">Commissione Base</h3>
-              </div>
-              <p id="cd-commissione" class="text-3xl font-bold text-slate-800 dark:text-white">0%</p>
-              <p class="text-xs text-slate-500 mt-2 font-medium">Percentuale predefinita applicata</p>
-            </div>
-          </div>
-
-          <!-- Sezione Grafico & Controlli -->
-          <div class="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-              <div>
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white">Andamento Annuale</h3>
-                <p class="text-sm text-slate-500">Confronta i compensi nel tempo</p>
-              </div>
-              
-              <div class="flex flex-wrap gap-3">
-                <select id="cd-year-select" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-shadow">
-                  <!-- Options generate dynamic -->
-                </select>
-
-                <select id="cd-compare-select" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-shadow">
-                  <option value="">-- Nessun Confronto --</option>
-                  <!-- Collaboratori caricati dinamicamente -->
-                </select>
-              </div>
-            </div>
-
-            <div class="w-full h-[400px]">
-              <canvas id="cd-chart"></canvas>
-            </div>
-          </div>
-
+    <div class="kpi-grid" style="padding: 0; margin-bottom: 24px; grid-template-columns: repeat(3, 1fr);">
+      <div class="kpi-card" style="--kpi-color: var(--success);">
+        <div class="kpi-label">Totale Maturato</div>
+        <div id="cd-totale-maturato" class="kpi-value">€ 0,00</div>
+        <div style="font-size: 11px; color: var(--text-muted);">Fatturato incassato con successo</div>
+      </div>
+      <div class="kpi-card" style="--kpi-color: var(--warning);">
+        <div class="kpi-label">Totale In Attesa</div>
+        <div id="cd-totale-attesa" class="kpi-value">€ 0,00</div>
+        <div style="font-size: 11px; color: var(--text-muted);">Preventivi accettati ma non saldati</div>
+      </div>
+      <div class="kpi-card" style="--kpi-color: var(--primary);">
+        <div class="kpi-label">Commissione Base</div>
+        <div id="cd-commissione" class="kpi-value">0%</div>
+        <div style="font-size: 11px; color: var(--text-muted);">Percentuale predefinita applicata</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px;">
+        <div>
+          <h3 style="font-weight: 700; color: var(--text-primary); margin: 0;">Andamento Annuale</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">Confronta i compensi nel tempo</p>
         </div>
+        <div style="display: flex; gap: 10px;">
+          <select id="cd-year-select" class="search-input" style="width: auto; padding: 6px 10px;">
+          </select>
+          <select id="cd-compare-select" class="search-input" style="width: auto; padding: 6px 10px;">
+            <option value="">-- Nessun Confronto --</option>
+          </select>
+        </div>
+      </div>
+      <div style="height: 350px; position: relative;">
+        <canvas id="cd-chart"></canvas>
       </div>
     </div>
   `;
 }
 
-// Iniezione nel DOM
-function injectOverlay() {
-  if (!document.getElementById('collaboratore-detail-overlay')) {
-    document.body.insertAdjacentHTML('beforeend', getTemplate());
-    
-    // Genera anni
-    const yearSelect = document.getElementById('cd-year-select');
-    const currentYear = new Date().getFullYear();
-    for (let i = currentYear; i >= currentYear - 5; i--) {
-      yearSelect.innerHTML += `<option value="${i}">${i}</option>`;
-    }
-
-    // Event Listeners
-    document.getElementById('cd-close-btn').addEventListener('click', closeOverlay);
-    document.getElementById('cd-year-select').addEventListener('change', reloadData);
-    document.getElementById('cd-compare-select').addEventListener('change', reloadData);
-  }
-}
-
 function formatCurrency(val) {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val);
+  return fmt.euro(val);
 }
 
-// Apertura UI
 export async function openCollaboratoreAnalytics(collabId) {
-  injectOverlay();
   currentCollaboratoreId = collabId;
-  const overlay = document.getElementById('collaboratore-detail-overlay');
   
-  // Resetta
-  document.getElementById('cd-compare-select').value = "";
-  
+  // Resetta stato
+  currentChart = null;
+
+  Modal.show(
+    "Analisi Collaboratore",
+    getModalBody(),
+    "",
+    { size: "xl" }
+  );
+
+  // Genera anni
+  const yearSelect = document.getElementById('cd-year-select');
+  const currentYear = new Date().getFullYear();
+  for (let i = currentYear; i >= currentYear - 5; i--) {
+    yearSelect.innerHTML += `<option value="${i}">${i}</option>`;
+  }
+
+  document.getElementById('cd-year-select').addEventListener('change', reloadData);
+  document.getElementById('cd-compare-select').addEventListener('change', reloadData);
+
   // Carica collaboratore corrente
-  const res = await window.electronAPI.invoke('db:collaboratori:get', collabId);
+  const res = await window.electronAPI.invoke('db:collaboratori:getById', collabId);
   if (res.success && res.data) {
-    document.getElementById('cd-nome-text').textContent = `${res.data.nome} ${res.data.cognome}`;
-    document.getElementById('cd-ruolo').textContent = res.data.ruolo || 'Nessun ruolo specificato';
+    document.getElementById('modal-title').textContent = `Analisi: ${res.data.nome} ${res.data.cognome} ${res.data.ruolo ? '(' + res.data.ruolo + ')' : ''}`;
     document.getElementById('cd-commissione').textContent = `${res.data.percentuale_commissione || 0}%`;
   }
 
@@ -139,16 +84,12 @@ export async function openCollaboratoreAnalytics(collabId) {
   const collabsRes = await window.electronAPI.invoke('db:collaboratori:getAll');
   if (collabsRes.success) {
     const select = document.getElementById('cd-compare-select');
-    select.innerHTML = '<option value="">-- Nessun Confronto --</option>';
     collabsRes.data.forEach(c => {
       if (c.id !== collabId) {
         select.innerHTML += `<option value="${c.id}">${c.nome} ${c.cognome}</option>`;
       }
     });
   }
-
-  overlay.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
 
   await reloadData();
 }

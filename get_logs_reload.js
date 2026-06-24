@@ -17,6 +17,18 @@ http.get('http://127.0.0.1:9222/json', (res) => {
       // reload the page to capture initialization errors
       ws.send(JSON.stringify({id: 4, method: 'Network.enable'}));
       ws.send(JSON.stringify({id: 5, method: 'Page.reload'}));
+      
+      setTimeout(() => {
+        ws.send(JSON.stringify({
+          id: 6,
+          method: 'Runtime.evaluate',
+          params: { 
+            expression: 'Pages.collaboratori.openCollaboratoreAnalytics(1).then(() => "SUCCESS").catch(e => e.message)',
+            awaitPromise: true,
+            returnByValue: true
+          }
+        }));
+      }, 3000);
     });
 
     ws.on('message', data => {
@@ -34,6 +46,8 @@ http.get('http://127.0.0.1:9222/json', (res) => {
         }
       } else if (msg.method === 'Network.loadingFailed') {
         console.log('[Network Failed]', msg.params.errorText, msg.params.type, msg.params.documentURL);
+      } else if (msg.id === 6) {
+        console.log('[Evaluate Result]', msg.result);
       }
     });
 
