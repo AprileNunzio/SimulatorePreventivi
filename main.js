@@ -58,10 +58,6 @@ const { setupIpcHandlers } = require('./backend/ipc-handlers');
 
 let mainWindow;
 
-    mainWindow?.webContents.send('update:error', err.message);
-  });
-}
-
 // ─── IPC UPDATER HANDLERS ───────────────────────────────────────────────────
 function setupUpdaterIpc() {
   ipcMain.handle('update:check-manual', async () => {
