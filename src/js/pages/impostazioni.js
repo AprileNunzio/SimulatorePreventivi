@@ -75,6 +75,15 @@ export default {
           </div>
         </div>
 
+        <!-- Obiettivi -->
+        <div class="card" style="margin-bottom: 24px; border: 2px solid var(--primary);">
+          <div class="section-title" style="margin-bottom:16px; color: var(--primary);">🎯 OBIETTIVI AZIENDALI</div>
+          <div class="form-group">
+            <label class="form-label">Obiettivo Fatturato Annuale (€)</label>
+            <input type="number" class="form-input" id="s-obiettivo" value="${s.obiettivo_fatturato_annuale||'50000'}" placeholder="es. 50000">
+            <small class="text-muted" style="display:block; margin-top:4px;">Il target annuale che vuoi raggiungere. Comparirà nel tachimetro della Dashboard.</small>
+          </div>
+        </div>
         <!-- Contatti -->
         <div class="card">
           <div class="section-title" style="margin-bottom:16px">📞 CONTATTI</div>
@@ -217,6 +226,7 @@ export default {
         smtp_secure: el.querySelector('#s-smtp-secure')?.value || '1',
         smtp_user: el.querySelector('#s-smtp-user')?.value || '',
         smtp_from: el.querySelector('#s-smtp-from')?.value || '',
+        obiettivo_fatturato_annuale: el.querySelector('#s-obiettivo')?.value || '50000',
       };
       const pass = el.querySelector('#s-smtp-pass')?.value;
       if (pass && pass !== '********') {

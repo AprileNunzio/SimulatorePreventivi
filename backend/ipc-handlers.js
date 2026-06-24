@@ -552,6 +552,15 @@ function setupIpcHandlers(ipcMain) {
     }
   });
 
+  ipcMain.handle('db:dashboard:scadenza', async () => {
+    try {
+      return await db.getPreventiviInScadenza();
+    } catch (err) {
+      logger.error('Error in db:dashboard:scadenza', err.stack);
+      return [];
+    }
+  });
+
   // ─── PDF / EXCEL ─────────────────────────────────────────────────────────
   ipcMain.handle('pdf:generate', async (e, data) => {
     try {

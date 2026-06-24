@@ -68,6 +68,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ─── DASHBOARD ───────────────────────────────────────────────────────────
   getDashboardKpi: () => ipcRenderer.invoke('db:dashboard:kpi'),
   getDashboardFollowups: () => ipcRenderer.invoke('db:dashboard:followup'),
+  getDashboardScadenze: () => ipcRenderer.invoke('db:dashboard:scadenza'),
 
   // ─── AUTO-UPDATER ────────────────────────────────────────────────────────
   checkForUpdate: () => ipcRenderer.invoke('update:check-manual'),

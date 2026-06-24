@@ -197,8 +197,10 @@ function setupUpdaterIpc() {
               receivedBytes += chunk.length;
               if (totalBytes) {
                 const percentage = Math.round((receivedBytes / totalBytes) * 100);
-                if (mainWindow) {
-                  mainWindow.webContents.send('update:progress', { percent: percentage });
+                if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+                  try {
+                    mainWindow.webContents.send('update:progress', { percent: percentage });
+                  } catch(e) {}
                 }
               }
             });
