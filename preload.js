@@ -72,6 +72,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportBackup: () => ipcRenderer.invoke('backup:export'),
   exportExternalBackup: () => ipcRenderer.invoke('backup:export-external'),
   importBackup: () => ipcRenderer.invoke('backup:import'),
+  listBackups: () => ipcRenderer.invoke('backup:list'),
+  restoreVersion: (filename) => ipcRenderer.invoke('backup:restoreVersion', filename),
 
   // ─── DASHBOARD ───────────────────────────────────────────────────────────
   getDashboardKpi: () => ipcRenderer.invoke('db:dashboard:kpi'),

@@ -268,6 +268,11 @@ function setupMenu() {
 app.whenReady().then(async () => {
   setupMenu();
   await setupDatabase();
+  
+  // Crea backup snapshot ad ogni avvio (sicurezza extra)
+  const { createStartupBackup } = require('./backend/db/backup');
+  createStartupBackup();
+  
   setupIpcHandlers(ipcMain);
   setupUpdaterIpc();
   createWindow();
