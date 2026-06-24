@@ -3,6 +3,13 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
   getVersion: () => ipcRenderer.invoke('app:version'),
+
+  // ─── AUTH / PIN ──────────────────────────────────────────────────────────
+  checkPin: () => ipcRenderer.invoke('auth:checkPin'),
+  setPin: (pin) => ipcRenderer.invoke('auth:setPin', pin),
+  verifyPin: (pin) => ipcRenderer.invoke('auth:verifyPin', pin),
+  resetPin: () => ipcRenderer.invoke('auth:resetPin'),
+
   
   // ─── PREVENTIVI ──────────────────────────────────────────────────────────
   getPreventivi: (filters) => ipcRenderer.invoke('db:preventivi:getAll', filters),
@@ -10,6 +17,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createPreventivo: (data) => ipcRenderer.invoke('db:preventivi:create', data),
   updatePreventivo: (id, data) => ipcRenderer.invoke('db:preventivi:update', id, data),
   deletePreventivo: (id) => ipcRenderer.invoke('db:preventivi:delete', id),
+  ricalcolaPreventivo: (id) => ipcRenderer.invoke('db:preventivi:ricalcola', id),
   
   // Clienti
   searchClienti: (query) => ipcRenderer.invoke('db:clienti:search', query),

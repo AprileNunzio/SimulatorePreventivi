@@ -24,6 +24,31 @@
 </head>
 <body>
   <div id="app">
+    <!-- PIN overlay -->
+    <div id="pin-overlay" class="hidden">
+      <div class="pin-card">
+        <div class="pin-logo">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div class="pin-title" id="pin-title">Inserisci PIN</div>
+        <div class="pin-subtitle" id="pin-subtitle">Inserisci il tuo PIN a 6 cifre per accedere</div>
+        <div class="pin-inputs" id="pin-inputs">
+          <input class="pin-digit" type="text" inputmode="numeric" maxlength="1" id="pin-0" autocomplete="off">
+          <input class="pin-digit" type="text" inputmode="numeric" maxlength="1" id="pin-1" autocomplete="off">
+          <input class="pin-digit" type="text" inputmode="numeric" maxlength="1" id="pin-2" autocomplete="off">
+          <input class="pin-digit" type="text" inputmode="numeric" maxlength="1" id="pin-3" autocomplete="off">
+          <input class="pin-digit" type="text" inputmode="numeric" maxlength="1" id="pin-4" autocomplete="off">
+          <input class="pin-digit" type="text" inputmode="numeric" maxlength="1" id="pin-5" autocomplete="off">
+        </div>
+        <div class="pin-error-msg" id="pin-error-msg"></div>
+        <button class="pin-btn-confirm" id="pin-confirm-btn" disabled>Accedi</button>
+        <button class="pin-clear-btn" id="pin-clear-btn">Cancella tutto</button>
+        <div class="pin-attempts-msg" id="pin-attempts-msg"></div>
+      </div>
+    </div>
     <!-- Splash screen -->
     <div id="splash">
       <div class="splash-inner">
@@ -121,6 +146,7 @@
         <div id="page-magazzino" class="page"></div>
         <div id="page-collaboratori" class="page"></div>
         <div id="page-collaboratore-detail" class="page"></div>
+        <div id="page-collaboratore-ledger" class="page"></div>
         <div id="page-impostazioni" class="page"></div>
       </main>
     </div>

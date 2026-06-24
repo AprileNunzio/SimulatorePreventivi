@@ -3,8 +3,62 @@ const logger = require('./logger');
 const { generatePdf } = require('./pdf-generator');
 const { generateExcel } = require('./excel/index');
 const { sendEmail } = require('./mailer');
+const crypto = require('crypto');
+
+function hashPin(pin) {
+  return crypto.createHash('sha256').update(pin).digest('hex');
+}
 
 function setupIpcHandlers(ipcMain) {
+  // ─── AUTH / PIN ──────────────────────────────────────────────────────────
+  ipcMain.handle('auth:checkPin', async () => {
+    try {
+      const impostazioni = await db.getAllImpostazioni();
+      const hasPin = !!(impostazioni && impostazioni['pin_hash'] && impostazioni['pin_hash'].length > 0);
+      return { hasPin };
+    } catch (err) {
+      logger.error('Error in auth:checkPin', err.stack);
+      return { hasPin: false };
+    }
+  });
+
+  ipcMain.handle('auth:setPin', async (e, pin) => {
+    try {
+      if (!pin || pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+        return { success: false, error: 'PIN non valido: deve essere 6 cifre numeriche' };
+      }
+      const pinHash = hashPin(pin);
+      await db.saveImpostazioni({ pin_hash: pinHash });
+      return { success: true };
+    } catch (err) {
+      logger.error('Error in auth:setPin', err.stack);
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('auth:verifyPin', async (e, pin) => {
+    try {
+      const impostazioni = await db.getAllImpostazioni();
+      const storedHash = impostazioni && impostazioni['pin_hash'];
+      if (!storedHash) return { success: false, error: 'PIN non impostato' };
+      const isValid = hashPin(pin) === storedHash;
+      return { success: isValid, error: isValid ? null : 'PIN non corretto' };
+    } catch (err) {
+      logger.error('Error in auth:verifyPin', err.stack);
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('auth:resetPin', async () => {
+    try {
+      await db.saveImpostazioni({ pin_hash: '' });
+      return { success: true };
+    } catch (err) {
+      logger.error('Error in auth:resetPin', err.stack);
+      return { success: false, error: err.message };
+    }
+  });
+
   // ─── PREVENTIVI ──────────────────────────────────────────────────────────
   ipcMain.handle('db:preventivi:getAll', async (e, filters) => {
 
@@ -341,6 +395,18 @@ function setupIpcHandlers(ipcMain) {
     }
 
   });
+
+  ipcMain.handle('db:assegnazioni:getById', async (e, id) => {
+    try {
+      const { get } = require('./db/core');
+      const a = get('SELECT a.*, c.nome, c.cognome, c.ruolo FROM assegnazioni_preventivo a JOIN collaboratori c ON a.collaboratore_id = c.id WHERE a.id = ?', [id]);
+      return { success: true, data: a };
+    } catch (err) {
+      logger.error('Error in db:assegnazioni:getById', err.stack);
+      return { success: false, error: err.message };
+    }
+  });
+
   ipcMain.handle('db:assegnazioni:create', async (e, data) => {
 
     try {

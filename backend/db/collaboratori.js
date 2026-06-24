@@ -12,6 +12,7 @@ function getAllCollaboratori() {
     c.totale_maturato = ledger.totaleMaturato;
     c.totale_pagato = ledger.totalePagato;
     c.da_saldare = ledger.daSaldare;
+    c.totale_in_attesa = ledger.totaleInAttesa;
     return c;
   });
 }

@@ -197,7 +197,22 @@ export default {
           </div>
           <div id="backup-status" style="margin-top:12px;font-size:12px;color:var(--text-muted)"></div>
         </div>
+
+        <!-- PIN Sicurezza -->
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title" style="margin-bottom:16px">🔐 SICUREZZA — PIN ACCESSO</div>
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">
+            Il PIN protegge l'accesso al software. È richiesto ad ogni avvio.
+            Se lo dimentichi puoi resettarlo (il software tornerà a chiederne uno nuovo al prossimo avvio).
+          </p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-secondary" id="btn-change-pin">🔑 Cambia PIN</button>
+            <button class="btn btn-danger" id="btn-reset-pin">🚨 Reset PIN (emergenza)</button>
+          </div>
+          <div id="pin-settings-status" style="margin-top:12px;font-size:12px;color:var(--text-muted)"></div>
+        </div>
       </div>`;
+
 
     el.querySelector('#btn-save-settings')?.addEventListener('click', async () => {
       const data = {
@@ -285,6 +300,103 @@ export default {
         } else {
           toast(res.error === 'canceled' ? 'Importazione annullata' : 'Errore: ' + res.error, res.error === 'canceled' ? 'info' : 'error');
           if (status) status.textContent = '';
+        }
+      });
+    });
+
+    // ── PIN handlers ───────────────────────────────────────────────────
+    el.querySelector('#btn-change-pin')?.addEventListener('click', () => {
+      Modal.show('Cambia PIN di Accesso', `
+        <div style="margin-bottom:16px;font-size:13px;color:var(--text-secondary)">Inserisci prima il PIN attuale, poi il nuovo PIN a 6 cifre.</div>
+        <div class="form-group"><label class="form-label">PIN Attuale</label>
+          <div class="pin-inputs" style="justify-content:flex-start;gap:6px">
+            ${[0,1,2,3,4,5].map(i => `<input class="pin-digit" type="text" inputmode="numeric" maxlength="1" id="old-pin-${i}" style="width:40px;height:50px;font-size:22px" autocomplete="off">`).join('')}
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:12px"><label class="form-label">Nuovo PIN</label>
+          <div class="pin-inputs" style="justify-content:flex-start;gap:6px">
+            ${[0,1,2,3,4,5].map(i => `<input class="pin-digit" type="text" inputmode="numeric" maxlength="1" id="new-pin-${i}" style="width:40px;height:50px;font-size:22px" autocomplete="off">`).join('')}
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:12px"><label class="form-label">Conferma Nuovo PIN</label>
+          <div class="pin-inputs" style="justify-content:flex-start;gap:6px">
+            ${[0,1,2,3,4,5].map(i => `<input class="pin-digit" type="text" inputmode="numeric" maxlength="1" id="conf-pin-${i}" style="width:40px;height:50px;font-size:22px" autocomplete="off">`).join('')}
+          </div>
+        </div>
+        <div id="change-pin-error" style="color:var(--danger);font-size:13px;margin-top:8px;min-height:20px"></div>`,
+        `<button class="btn btn-ghost" onclick="Modal.close()">Annulla</button>
+         <button class="btn btn-primary" id="m-save-pin">Salva Nuovo PIN</button>`
+      );
+
+      // Setup auto-advance for each group
+      ['old', 'new', 'conf'].forEach(prefix => {
+        for (let i = 0; i < 6; i++) {
+          const inp = document.getElementById(`${prefix}-pin-${i}`);
+          if (!inp) continue;
+          inp.addEventListener('input', (e) => {
+            const val = e.target.value.replace(/\D/g, '');
+            inp.value = val ? val[val.length-1] : '';
+            if (inp.value && i < 5) document.getElementById(`${prefix}-pin-${i+1}`)?.focus();
+          });
+          inp.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !inp.value && i > 0) {
+              document.getElementById(`${prefix}-pin-${i-1}`).value = '';
+              document.getElementById(`${prefix}-pin-${i-1}`)?.focus();
+            }
+          });
+          inp.addEventListener('keypress', (e) => { if (!/\d/.test(e.key)) e.preventDefault(); });
+        }
+      });
+
+      document.getElementById('m-save-pin')?.addEventListener('click', async () => {
+        const oldPin = [0,1,2,3,4,5].map(i => document.getElementById(`old-pin-${i}`)?.value || '').join('');
+        const newPin = [0,1,2,3,4,5].map(i => document.getElementById(`new-pin-${i}`)?.value || '').join('');
+        const confPin = [0,1,2,3,4,5].map(i => document.getElementById(`conf-pin-${i}`)?.value || '').join('');
+        const errEl = document.getElementById('change-pin-error');
+
+        if (oldPin.length < 6 || newPin.length < 6 || confPin.length < 6) {
+          if (errEl) errEl.textContent = 'Tutti i PIN devono essere 6 cifre'; return;
+        }
+        if (newPin !== confPin) {
+          if (errEl) errEl.textContent = 'Il nuovo PIN e la conferma non coincidono'; return;
+        }
+
+        // Verifica vecchio PIN
+        const verRes = await window.electronAPI.verifyPin(oldPin);
+        if (!verRes.success) {
+          if (errEl) errEl.textContent = 'PIN attuale non corretto'; return;
+        }
+
+        // Imposta nuovo PIN
+        const setRes = await window.electronAPI.setPin(newPin);
+        if (setRes.success) {
+          Modal.close();
+          toast('PIN cambiato con successo!', 'success');
+          const st = el.querySelector('#pin-settings-status');
+          if (st) st.textContent = `PIN aggiornato il ${new Date().toLocaleString('it-IT')}`;
+        } else {
+          if (errEl) errEl.textContent = setRes.error || 'Errore salvataggio';
+        }
+      });
+    });
+
+    el.querySelector('#btn-reset-pin')?.addEventListener('click', () => {
+      Modal.show('Reset PIN — Attenzione',
+        `<div style="color:var(--danger);font-weight:700;margin-bottom:12px">⚠️ Operazione di emergenza</div>
+         <p>Il PIN verrà eliminato. Al prossimo avvio del software ti verrà chiesto di impostarne uno nuovo.</p>
+         <p style="color:var(--text-secondary);font-size:13px">Usa questa opzione solo se hai dimenticato il PIN attuale.</p>`,
+        `<button class="btn btn-ghost" onclick="Modal.close()">Annulla</button>
+         <button class="btn btn-danger" id="m-confirm-reset-pin">Reset PIN</button>`
+      );
+      document.getElementById('m-confirm-reset-pin')?.addEventListener('click', async () => {
+        const res = await window.electronAPI.resetPin();
+        if (res.success) {
+          Modal.close();
+          toast('PIN resettato. Al prossimo avvio verrà richiesto un nuovo PIN.', 'success');
+          const st = el.querySelector('#pin-settings-status');
+          if (st) st.textContent = 'PIN resettato. Sarà richiesto al prossimo avvio.';
+        } else {
+          toast('Errore reset PIN: ' + res.error, 'error');
         }
       });
     });

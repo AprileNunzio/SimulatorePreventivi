@@ -39,8 +39,21 @@ function getModalBody() {
           </select>
         </div>
       </div>
-      <div style="height: 350px; position: relative;">
+      <div style="height: 280px; position: relative;">
         <canvas id="cd-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Sezione confronto con tutti gli altri collaboratori -->
+    <div class="card" style="margin-top: 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <h3 style="font-weight:700;color:var(--text-primary);margin:0;">Confronto con Altri Collaboratori</h3>
+          <p style="font-size:13px;color:var(--text-muted);margin:4px 0 0 0;">Performance relativa rispetto al team</p>
+        </div>
+      </div>
+      <div id="cd-compare-table-wrap">
+        <div style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px">Caricamento...</div>
       </div>
     </div>
   `;
@@ -80,7 +93,7 @@ export async function openCollaboratoreAnalytics(collabId) {
     document.getElementById('cd-commissione').textContent = `${res.data.percentuale_commissione || 0}%`;
   }
 
-  // Popola select confronto
+  // Popola select confronto e tabella confronto
   const collabsRes = await window.electronAPI.invoke('db:collaboratori:getAll');
   if (collabsRes.success) {
     const select = document.getElementById('cd-compare-select');
@@ -89,9 +102,93 @@ export async function openCollaboratoreAnalytics(collabId) {
         select.innerHTML += `<option value="${c.id}">${c.nome} ${c.cognome}</option>`;
       }
     });
+
+    // Render tabella confronto tutti i collaboratori
+    renderCompareTable(collabsRes.data, collabId, res.data);
   }
 
   await reloadData();
+}
+
+function renderCompareTable(allCollabs, currentId, currentCollab) {
+  const wrap = document.getElementById('cd-compare-table-wrap');
+  if (!wrap) return;
+
+  const others = allCollabs.filter(c => c.id !== currentId);
+  if (!others.length) {
+    wrap.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px">Nessun altro collaboratore in anagrafica</div>`;
+    return;
+  }
+
+  // Calcola total maturato di tutti per percentuale
+  const maxMaturato = Math.max(...allCollabs.map(c => parseFloat(c.totale_maturato || 0)), 1);
+
+  const currentMaturato = parseFloat(currentCollab?.totale_maturato || 0);
+  const currentInAttesa = parseFloat(currentCollab?.totale_in_attesa || 0);
+  const currentPagato = parseFloat(currentCollab?.totale_pagato || 0);
+
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table style="font-size:13px;">
+        <thead>
+          <tr>
+            <th>Collaboratore</th>
+            <th>Ruolo</th>
+            <th class="td-right">Maturato</th>
+            <th class="td-right">In Attesa</th>
+            <th class="td-right">Pagato</th>
+            <th class="td-right">Da Saldare</th>
+            <th style="width:120px">Performance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Riga corrente evidenziata -->
+          <tr style="background:rgba(var(--primary-rgb,29,78,216),0.06);border-radius:8px;">
+            <td><div style="display:flex;align-items:center;gap:8px;">
+              <div class="avatar" style="width:28px;height:28px;font-size:11px;">${fmt.initials(currentCollab?.nome || '', currentCollab?.cognome || '')}</div>
+              <div><div style="font-weight:700;color:var(--primary)">${currentCollab?.nome} ${currentCollab?.cognome}</div>
+              <div style="font-size:10px;color:var(--primary);font-weight:600">▶ Questo collaboratore</div></div>
+            </div></td>
+            <td class="td-muted">${currentCollab?.ruolo || '—'}</td>
+            <td class="td-right" style="font-weight:700;">${fmt.euro(currentMaturato)}</td>
+            <td class="td-right" style="color:var(--warning,#d97706);">${fmt.euro(currentInAttesa)}</td>
+            <td class="td-right" style="color:var(--success);">${fmt.euro(currentPagato)}</td>
+            <td class="td-right" style="color:${(currentMaturato - currentPagato) > 0 ? 'var(--danger)' : 'var(--success)'};">${fmt.euro(currentMaturato - currentPagato)}</td>
+            <td>
+              <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden;">
+                <div style="height:100%;width:${Math.min((currentMaturato/maxMaturato)*100,100).toFixed(1)}%;background:var(--primary);border-radius:4px;transition:width 0.5s;"></div>
+              </div>
+              <div style="font-size:10px;color:var(--text-muted);margin-top:3px;">${((currentMaturato/maxMaturato)*100).toFixed(0)}% del top</div>
+            </td>
+          </tr>
+          ${others.map(c => {
+            const maturato = parseFloat(c.totale_maturato || 0);
+            const inAttesa = parseFloat(c.totale_in_attesa || 0);
+            const pagato = parseFloat(c.totale_pagato || 0);
+            const daSaldare = parseFloat(c.da_saldare || 0);
+            const pct = Math.min((maturato / maxMaturato) * 100, 100);
+            return `
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:8px;">
+                  <div class="avatar" style="width:28px;height:28px;font-size:11px;">${fmt.initials(c.nome, c.cognome)}</div>
+                  <div style="font-weight:500">${c.nome} ${c.cognome}</div>
+                </div></td>
+                <td class="td-muted">${c.ruolo || '—'}</td>
+                <td class="td-right" style="font-weight:600;">${fmt.euro(maturato)}</td>
+                <td class="td-right" style="color:var(--warning,#d97706);">${fmt.euro(inAttesa)}</td>
+                <td class="td-right" style="color:var(--success);">${fmt.euro(pagato)}</td>
+                <td class="td-right" style="color:${daSaldare > 0 ? 'var(--danger)' : 'var(--success)'};">${fmt.euro(daSaldare)}</td>
+                <td>
+                  <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden;">
+                    <div style="height:100%;width:${pct.toFixed(1)}%;background:var(--success);border-radius:4px;transition:width 0.5s;"></div>
+                  </div>
+                  <div style="font-size:10px;color:var(--text-muted);margin-top:3px;">${pct.toFixed(0)}% del top</div>
+                </td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
 }
 
 // Ricaricamento Dati
@@ -140,8 +237,8 @@ function renderChart(data1, data2) {
   }
 
   const isDark = document.documentElement.classList.contains('dark');
-  const textColor = isDark ? '#94a3b8' : '#64748b'; // slate-400 / slate-500
-  const gridColor = isDark ? '#334155' : '#e2e8f0'; // slate-700 / slate-200
+  const textColor = isDark ? '#94a3b8' : '#64748b';
+  const gridColor = isDark ? '#334155' : '#e2e8f0';
 
   const labels = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
@@ -149,7 +246,7 @@ function renderChart(data1, data2) {
     {
       label: data1.nome || 'Maturato',
       data: data1.mensilitaMaturate,
-      backgroundColor: 'rgba(37, 99, 235, 0.8)', // blue-600
+      backgroundColor: 'rgba(37, 99, 235, 0.8)',
       borderColor: '#2563eb',
       borderWidth: 1,
       borderRadius: 4
@@ -160,30 +257,25 @@ function renderChart(data1, data2) {
     datasets.push({
       label: data2.nome || 'Collaboratore 2',
       data: data2.mensilitaMaturate,
-      backgroundColor: 'rgba(16, 185, 129, 0.8)', // emerald-500
+      backgroundColor: 'rgba(16, 185, 129, 0.8)',
       borderColor: '#10b981',
       borderWidth: 1,
       borderRadius: 4
     });
   } else {
-    // Se singolo, mostriamo anche l'in attesa sovrapposto (stacked)
     datasets.push({
       label: 'In Attesa (Accettati)',
       data: data1.mensilitaInAttesa,
-      backgroundColor: 'rgba(245, 158, 11, 0.6)', // amber-500
+      backgroundColor: 'rgba(245, 158, 11, 0.6)',
       borderColor: '#f59e0b',
       borderWidth: 1,
       borderRadius: 4
     });
   }
 
-  // Use Chart from global window object (loaded via script tag)
   currentChart = new window.Chart(ctx, {
     type: 'bar',
-    data: {
-      labels,
-      datasets
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -199,9 +291,7 @@ function renderChart(data1, data2) {
             label: function(context) {
               let label = context.dataset.label || '';
               if (label) { label += ': '; }
-              if (context.parsed.y !== null) {
-                label += formatCurrency(context.parsed.y);
-              }
+              if (context.parsed.y !== null) { label += formatCurrency(context.parsed.y); }
               return label;
             }
           }
@@ -209,13 +299,13 @@ function renderChart(data1, data2) {
       },
       scales: {
         x: {
-          stacked: !data2, // Se singolo impiliamo, se compare affianchiamo
-          grid: { display: false, drawBorder: false },
+          stacked: !data2,
+          grid: { display: false },
           ticks: { color: textColor }
         },
         y: {
           stacked: !data2,
-          grid: { color: gridColor, drawBorder: false },
+          grid: { color: gridColor },
           ticks: {
             color: textColor,
             callback: function(value) { return '€ ' + value; }
@@ -224,12 +314,4 @@ function renderChart(data1, data2) {
       }
     }
   });
-}
-
-function closeOverlay() {
-  const overlay = document.getElementById('collaboratore-detail-overlay');
-  if (overlay) {
-    overlay.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
 }

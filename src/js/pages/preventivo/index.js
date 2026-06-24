@@ -56,8 +56,14 @@ export default {
   addCollab(prevId, el) {
     return CollaboratoriManager.addCollab.call(this, prevId, el);
   },
-  removeCollab(prevId, collabId, el) {
-    return CollaboratoriManager.removeCollab.call(this, prevId, collabId, el);
+  removeCollab(assId, prevId) {
+    return CollaboratoriManager.removeCollab.call(this, assId, prevId);
+  },
+  editCollab(assId, prevId) {
+    return CollaboratoriManager.editCollab.call(this, assId, prevId);
+  },
+  _showEditCollabModal(a, prevId) {
+    return CollaboratoriManager._showEditCollabModal.call(this, a, prevId);
   },
 
   openDocModal(prevId) {

@@ -25,7 +25,7 @@ export default {
             <thead>
               <tr>
                 <th>Collaboratore</th><th>Ruolo</th><th>Contatti</th>
-                <th class="td-right">Maturato</th><th class="td-right">Pagato</th>
+                <th class="td-right">Maturato</th><th class="td-right">In Attesa</th><th class="td-right">Pagato</th>
                 <th class="td-right">Da Saldare</th><th class="td-center">Azioni</th>
               </tr>
             </thead>
@@ -47,7 +47,7 @@ export default {
 
     const tbody = el.querySelector('#collab-tbody');
     if (!data.length) {
-      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
         <div class="empty-icon">👥</div>
         <div class="empty-title">Nessun collaboratore</div>
         <div class="empty-sub">Aggiungi il primo collaboratore per assegnarlo ai preventivi</div>
@@ -60,9 +60,9 @@ export default {
       <tr>
         <td>
           <div style="display:flex;align-items:center;gap:12px">
-            <div class="avatar">${fmt.initials(c.nome, c.cognome)}</div>
+            <div class="avatar" style="cursor:pointer" onclick="Router.navigate('collaboratore-ledger',{id:${c.id}})">${fmt.initials(c.nome, c.cognome)}</div>
             <div>
-              <div style="font-weight:600">${c.cognome} ${c.nome}</div>
+              <div style="font-weight:600;cursor:pointer" onclick="Router.navigate('collaboratore-ledger',{id:${c.id}})">${c.cognome} ${c.nome}</div>
               ${c.codice_fiscale ? `<div style="font-size:11px;color:var(--text-muted)">C.F. ${c.codice_fiscale}</div>` : ''}
             </div>
           </div>
@@ -73,6 +73,7 @@ export default {
           ${c.telefono ? `<div style="font-size:12px;color:var(--text-muted)">${c.telefono}</div>` : ''}
         </td>
         <td class="td-right" style="font-weight:600;color:var(--text-main)">${fmt.euro(c.totale_maturato || 0)}</td>
+        <td class="td-right" style="font-weight:600;color:var(--warning, #d97706)">${fmt.euro(c.totale_in_attesa || 0)}</td>
         <td class="td-right" style="font-weight:600;color:var(--success)">${fmt.euro(c.totale_pagato || 0)}</td>
         <td class="td-right">
           <span class="stato-badge ${c.da_saldare > 0 ? 'stato-rifiutato' : 'stato-accettato'}" style="justify-content:flex-end">
@@ -81,6 +82,7 @@ export default {
         </td>
         <td>
           <div style="display:flex;gap:4px">
+            <button class="btn-icon" title="Libro Contabile" onclick="Router.navigate('collaboratore-ledger',{id:${c.id}})">📒</button>
             <button class="btn-icon" title="Analisi" onclick="Pages.collaboratori.openCollaboratoreAnalytics(${c.id})">📊</button>
             <button class="btn-icon" title="Modifica" onclick="Pages.collaboratori.openForm(${c.id},document.getElementById('page-collaboratori'))">✏️</button>
             <button class="btn-icon" style="color:var(--danger)" title="Elimina" onclick="Pages.collaboratori.elimina(${c.id},'${c.nome} ${c.cognome}')">🗑</button>
