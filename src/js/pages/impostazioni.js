@@ -283,11 +283,13 @@ export default {
     el.querySelector('#btn-backup-now')?.addEventListener('click', async () => {
       const r = await window.electronAPI.exportBackup();
       const status = el.querySelector('#backup-status');
-      if (r.success) {
+      if (r && r.success) {
         toast('Backup completato!', 'success');
         if (status) status.textContent = `Ultimo backup: ${new Date().toLocaleString('it-IT')}`;
         // Ricarica la pagina per mostrare il nuovo backup nella tabella
         setTimeout(() => this.render(el), 1000);
+      } else {
+        toast('Errore durante il backup manuale.', 'error');
       }
     });
 

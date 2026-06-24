@@ -39,8 +39,10 @@ function performBackup() {
     }
 
     console.log('[Backup] Completato:', new Date().toLocaleTimeString('it-IT'));
+    return { success: true };
   } catch (err) {
     console.error('[Backup] Errore:', err.message);
+    return { success: false, error: err.message };
   }
 }
 
@@ -60,6 +62,9 @@ function createStartupBackup() {
     const startupFile = path.join(global.BACKUP_PATH, `backup_startup_${dateStr}.json`);
     fs.writeFileSync(startupFile, JSON.stringify(data, null, 2), 'utf8');
     console.log('[Backup] Startup snapshot creato:', startupFile);
+    
+    // Forza anche la creazione del backup giornaliero (se non esiste già per oggi)
+    performBackup();
   } catch(err) {
     console.error('[Backup] Errore startup:', err.message);
   }
