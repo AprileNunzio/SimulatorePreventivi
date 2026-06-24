@@ -713,19 +713,6 @@ function setupIpcHandlers(ipcMain) {
       
       const targetDir = res.filePaths[0];
       return db.exportExternalBackup(targetDir);
-  });
-  
-  ipcMain.handle('backup:export-external', async () => {
-    try {
-      const { dialog } = require('electron');
-      const res = await dialog.showOpenDialog({
-        title: 'Seleziona Unità Esterna o Cartella di Destinazione',
-        properties: ['openDirectory']
-      });
-      if (res.canceled || res.filePaths.length === 0) return { success: false, error: 'canceled' };
-      
-      const targetDir = res.filePaths[0];
-      return db.exportExternalBackup(targetDir);
     } catch (e) {
       return { success: false, error: e.message };
     }
