@@ -33,7 +33,9 @@ export default {
         <!-- Cash Flow / Pipeline -->
         <div class="card" style="padding: 24px;">
           <div class="section-title" style="margin-bottom:16px;">PIPELINE FINANZIARIA</div>
-          <canvas id="chart-pipeline" height="250"></canvas>
+          <div style="position: relative; height: 250px; width: 100%;">
+            <canvas id="chart-pipeline"></canvas>
+          </div>
         </div>
 
         <!-- Obiettivo Annuale -->
