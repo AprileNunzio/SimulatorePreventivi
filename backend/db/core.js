@@ -75,10 +75,15 @@ function runTransaction(fn) {
     db.run('COMMIT');
     persistDb();
   } catch (err) {
-    db.run('ROLLBACK');
+    try {
+      db.run('ROLLBACK');
+    } catch (rollbackErr) {
+      // Ignore "cannot rollback - no transaction is active"
+    }
     throw err;
   }
 }
+
 
 function createTables() {
   db.run(`
