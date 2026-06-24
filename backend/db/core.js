@@ -351,8 +351,9 @@ function ricalcolaPreventivo(preventivoId) {
     
     // Aggiungiamo il costo interno del collaboratore al totale_costo
     totale_costo += compenso;
-    // Aggiungiamo il prezzo di vendita al cliente all'imponibile
-    totale_imponibile += parseFloat(a.prezzo_al_cliente) || 0;
+    // Aggiungiamo il prezzo di vendita al cliente all'imponibile (se 0, applichiamo il costo interno di default)
+    const prezzo_vendita = parseFloat(a.prezzo_al_cliente) || compenso;
+    totale_imponibile += prezzo_vendita;
   });
 
   const totale_iva = totale_imponibile * iva;

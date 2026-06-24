@@ -281,7 +281,7 @@ async function generatePdf({ preventivo, voci, assegnazioni, impostazioni, modal
       // Righe assegnazioni (manodopera/installazione addebitata al cliente)
       if (assegnazioni && assegnazioni.length > 0) {
         assegnazioni.forEach((ass, idx) => {
-          const prezzo = parseFloat(ass.prezzo_al_cliente) || 0;
+          const prezzo = parseFloat(ass.prezzo_al_cliente) || parseFloat(ass.compenso_calcolato) || 0;
           if (prezzo === 0 && modalita !== 'dettagliata') return; // Nascondi se zero in modalità aggregata
 
           const rowH = 22;

@@ -7,7 +7,7 @@ export default {
     
     // Calcolo costo e vendita del lavoro dalle assegnazioni
     const costoLavoro = (prev.assegnazioni || []).reduce((acc, a) => acc + (parseFloat(a.compenso_calcolato) || 0), 0);
-    const venditaLavoro = (prev.assegnazioni || []).reduce((acc, a) => acc + (parseFloat(a.prezzo_al_cliente) || 0), 0);
+    const venditaLavoro = (prev.assegnazioni || []).reduce((acc, a) => acc + (parseFloat(a.prezzo_al_cliente) || parseFloat(a.compenso_calcolato) || 0), 0);
     
     // Calcolo costo e vendita materiali dalle voci
     const costoMateriali = (prev.voci || []).reduce((acc, v) => acc + (((parseFloat(v.prezzo_acquisto) || 0) + (parseFloat(v.spese_accessorie) || 0)) * (parseFloat(v.quantita) || 1)), 0);
