@@ -1,0 +1,42 @@
+/* ─── DETAIL LAYOUT ──────────────────────────────────── */
+.detail-layout {
+  display: grid; grid-template-columns: 1fr 310px;
+  gap: 20px; padding: 24px 32px; align-items: start;
+}
+
+.detail-aside {}
+
+/* ─── PROGRESS BAR ───────────────────────────────────── */
+.progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+
+.progress-fill {
+  height: 100%; border-radius: 3px; transition: width 0.5s ease;
+  background: var(--primary);
+}
+
+/* ─── INFO GRID ──────────────────────────────────────── */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.info-item label {
+  font-size: 10px; font-weight: 700;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em;
+  display: block; margin-bottom: 3px;
+}
+
+.info-item span { font-size: 13.5px; color: var(--text-primary); font-weight: 500; }
+
+/* ─── BACK BTN ───────────────────────────────────────── */
+.back-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 13px; color: var(--text-muted); cursor: pointer;
+  transition: color var(--transition); padding: 4px 0;
+  background: none; border: none; font-family: var(--font);
+}
+
+.back-btn:hover { color: var(--primary); }
+
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .detail-layout { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
