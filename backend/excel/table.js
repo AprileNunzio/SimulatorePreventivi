@@ -50,11 +50,14 @@ function buildTable(sheet, preventivo, startRow) {
       sheet.getCell(`F${row}`).value = subTot;
       sheet.getCell(`F${row}`).numFmt = S.formatCurrency;
 
+      // Imposta altezza riga per respiro
+      sheet.getRow(row).height = 25;
+
       cols.forEach(col => {
         const cell = sheet.getCell(`${col}${row}`);
         cell.font = S.fontNormal;
         cell.border = S.borderThinAll;
-        cell.alignment = col === 'B' ? S.alignLeft : S.alignCenter;
+        cell.alignment = col === 'B' ? { ...S.alignLeft, indent: 1 } : S.alignCenter;
         if (fillToUse) cell.fill = fillToUse;
       });
       row++;

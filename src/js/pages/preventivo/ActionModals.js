@@ -105,23 +105,11 @@ export default {
     
     const impostazioni = await window.electronAPI.getImpostazioni();
     
-    let pathDest = null;
-    try {
-      const saveRes = await window.electronAPI.showSaveDialog({
-        title: 'Salva Excel',
-        defaultPath: `Preventivo_${prev.numero.replace(/[\/\\]/g, '-')}.xlsx`,
-        filters: [{ name: 'Excel Workbook', extensions: ['xlsx'] }]
-      });
-      if (saveRes.canceled) return;
-      pathDest = saveRes.filePath;
-    } catch (e) {
-      // Ignora, usa default
-    }
-    
+    // Non apriamo più la finestra di dialogo. Salviamo direttamente nella cartella di default.
     const res = await window.electronAPI.generateExcel({
       preventivo: prev,
       impostazioni: impostazioni,
-      destinazione: pathDest
+      destinazione: null // Il backend lo salverà nella cartella EXCEL predefinita con il nome standard
     });
     
     if (res.success) {

@@ -4,21 +4,20 @@ const { S } = require('./styles');
 function buildFooter(sheet, preventivo, impostazioni, startRow, totalePreventivo) {
   let row = startRow;
 
-  // Blocco Totale
+  // Blocco Totale (Box evidenziato)
   sheet.getCell(`E${row}`).value = 'TOTALE COMPLESSIVO:';
-  sheet.getCell(`E${row}`).font = S.fontTotalHighlight;
+  sheet.getCell(`E${row}`).font = { name: 'Segoe UI', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
   sheet.getCell(`E${row}`).alignment = S.alignRight;
-  sheet.getCell(`E${row}`).fill = S.fillTotalRow;
+  sheet.getCell(`E${row}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; // Slate 900
   
   sheet.getCell(`F${row}`).value = totalePreventivo;
-  sheet.getCell(`F${row}`).font = S.fontTotalHighlight;
+  sheet.getCell(`F${row}`).font = { name: 'Segoe UI', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
   sheet.getCell(`F${row}`).numFmt = S.formatCurrency;
   sheet.getCell(`F${row}`).alignment = S.alignRight;
-  sheet.getCell(`F${row}`).fill = S.fillTotalRow;
+  sheet.getCell(`F${row}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
   
-  // Applica bordi al totale
-  sheet.getCell(`E${row}`).border = { top: S.borderTopThick.top, bottom: S.borderBottomThick.bottom, left: S.borderThinAll.left };
-  sheet.getCell(`F${row}`).border = { top: S.borderTopThick.top, bottom: S.borderBottomThick.bottom, right: S.borderThinAll.right };
+  // Applica altezza per evidenziare
+  sheet.getRow(row).height = 35;
 
   row += 3;
 

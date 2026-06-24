@@ -5,12 +5,19 @@
   display: flex; align-items: center; justify-content: center;
 }
 
-.splash-inner { text-align: center; }
+.splash-inner { 
+  text-align: center; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
 
 .splash-logo {
-  margin-bottom: 24px;
   animation: splashPulse 1.6s ease-in-out infinite;
   filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3));
+  margin-bottom: 8px;
 }
 
 @keyframes splashPulse {
@@ -20,18 +27,19 @@
 
 .splash-title {
   font-size: 30px; font-weight: 800; color: #ffffff;
-  letter-spacing: -0.5px; margin-bottom: 6px;
+  letter-spacing: -0.5px; margin: 0;
 }
 
 .splash-sub {
   color: rgba(255,255,255,0.65); font-size: 14px;
-  font-weight: 400; margin-bottom: 40px;
+  font-weight: 400; margin: 0; margin-bottom: 24px;
 }
 
 .splash-bar {
   width: 240px; height: 3px;
   background: rgba(255,255,255,0.2);
   border-radius: 999px; margin: 0 auto; overflow: hidden;
+  margin-top: 8px;
 }
 
 .splash-fill {
