@@ -57,7 +57,7 @@ export default {
     }
 
     tbody.innerHTML = data.map(c => `
-      <tr class="clickable-row" onclick="Pages.collaboratori.openCollaboratoreAnalytics(${c.id})">
+      <tr>
         <td>
           <div style="display:flex;align-items:center;gap:12px">
             <div class="avatar">${fmt.initials(c.nome, c.cognome)}</div>
@@ -79,8 +79,9 @@ export default {
             ${c.da_saldare > 0 ? 'Da Saldare: ' : 'Saldo OK: '}${fmt.euro(c.da_saldare || 0)}
           </span>
         </td>
-        <td onclick="event.stopPropagation()">
+        <td>
           <div style="display:flex;gap:4px">
+            <button class="btn-icon" title="Analisi" onclick="Pages.collaboratori.openCollaboratoreAnalytics(${c.id})">📊</button>
             <button class="btn-icon" title="Modifica" onclick="Pages.collaboratori.openForm(${c.id},document.getElementById('page-collaboratori'))">✏️</button>
             <button class="btn-icon" style="color:var(--danger)" title="Elimina" onclick="Pages.collaboratori.elimina(${c.id},'${c.nome} ${c.cognome}')">🗑</button>
           </div>
