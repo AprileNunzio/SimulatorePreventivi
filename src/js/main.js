@@ -74,6 +74,7 @@ function setupPinInputs() {
       if (digit.value) {
         digit.classList.add('filled');
         clearError();
+        updateConfirmBtn();
         // Move to next
         if (idx < digits.length - 1) {
           digits[idx + 1].focus();
@@ -86,8 +87,8 @@ function setupPinInputs() {
         }
       } else {
         digit.classList.remove('filled');
+        updateConfirmBtn();
       }
-      updateConfirmBtn();
     });
 
     digit.addEventListener('keydown', (e) => {
@@ -102,12 +103,17 @@ function setupPinInputs() {
         digits[idx - 1].focus();
       } else if (e.key === 'ArrowRight' && idx < digits.length - 1) {
         digits[idx + 1].focus();
+      } else if (e.key === 'Enter') {
+        const pin = getPin();
+        if (pin.length === 6 && confirmBtn && !confirmBtn.disabled) {
+          confirmBtn.click();
+        }
       }
     });
 
     // Prevent non-numeric input
     digit.addEventListener('keypress', (e) => {
-      if (!/\d/.test(e.key)) e.preventDefault();
+      if (!/\d/.test(e.key) && e.key !== 'Enter') e.preventDefault();
     });
 
     digit.addEventListener('paste', (e) => {
