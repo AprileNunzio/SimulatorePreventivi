@@ -95,6 +95,7 @@ function createAssegnazione(data) {
     compenso, data.titolo_voce || 'Installazione', data.prezzo_al_cliente || 0, data.note || ''
   ]);
   const created = get('SELECT id FROM assegnazioni_preventivo ORDER BY id DESC LIMIT 1');
+  ricalcolaPreventivo(data.preventivo_id);
   persistDb();
   triggerBackup();
   return { id: created?.id };
@@ -114,13 +115,16 @@ function updateAssegnazione(id, data) {
     `UPDATE assegnazioni_preventivo SET tipo_compenso=?, compenso_fisso=?, percentuale_applicata=?, compenso_calcolato=?, titolo_voce=?, prezzo_al_cliente=?, note=? WHERE id=?`,
     [tipo, data.compenso_fisso || 0, pct, compenso, titolo, prezzoClient, data.note || a.note, id]
   );
+  ricalcolaPreventivo(a.preventivo_id);
   persistDb();
   triggerBackup();
   return { success: true };
 }
 
 function deleteAssegnazione(id) {
+  const a = get('SELECT preventivo_id FROM assegnazioni_preventivo WHERE id = ?', [id]);
   run('DELETE FROM assegnazioni_preventivo WHERE id = ?', [id]);
+  if (a) ricalcolaPreventivo(a.preventivo_id);
   persistDb();
   triggerBackup();
   return { success: true };
