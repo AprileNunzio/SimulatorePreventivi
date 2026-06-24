@@ -30,7 +30,29 @@ async function setupDatabase() {
   console.log('[DB] Database sql.js inizializzato:', dbPath);
 }
 
+let inTransaction = false;
+
+function runTransaction(fn) {
+  db.run('BEGIN TRANSACTION');
+  inTransaction = true;
+  try {
+    fn();
+    inTransaction = false;
+    db.run('COMMIT');
+    persistDb();
+  } catch (err) {
+    inTransaction = false;
+    try {
+      db.run('ROLLBACK');
+    } catch (rollbackErr) {
+      // Ignore "cannot rollback - no transaction is active"
+    }
+    throw err;
+  }
+}
+
 function persistDb() {
+  if (inTransaction) return; // db.export() commits the transaction!
   try {
     const data = db.export();
     const buffer = Buffer.from(data);
@@ -42,7 +64,7 @@ function persistDb() {
 
 function run(sql, params = []) {
   db.run(sql, params);
-  persistDb();
+  if (!inTransaction) persistDb();
 }
 
 function get(sql, params = []) {
@@ -68,21 +90,6 @@ function all(sql, params = []) {
   return results;
 }
 
-function runTransaction(fn) {
-  db.run('BEGIN TRANSACTION');
-  try {
-    fn();
-    db.run('COMMIT');
-    persistDb();
-  } catch (err) {
-    try {
-      db.run('ROLLBACK');
-    } catch (rollbackErr) {
-      // Ignore "cannot rollback - no transaction is active"
-    }
-    throw err;
-  }
-}
 
 
 function createTables() {
