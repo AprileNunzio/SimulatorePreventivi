@@ -30,6 +30,10 @@ function getDashboardKpi() {
     margine_medio: (() => {
       const acc = [...accettati, ...pagati].filter(p => p.margine_percentuale);
       return acc.length ? acc.reduce((s, p) => s + parseFloat(p.margine_percentuale || 0), 0) / acc.length : 0;
+    })(),
+    margine_totale: (() => {
+      const acc = [...accettati, ...pagati].filter(p => p.margine_euro);
+      return acc.reduce((s, p) => s + parseFloat(p.margine_euro || 0), 0);
     })()
   };
 

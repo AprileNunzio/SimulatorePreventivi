@@ -178,6 +178,7 @@ export default {
       { label: 'Business Generato (Attivo)', value: fmt.euro(t.pipeline_totale), sub: 'Valore totale in trattativa o chiuso', color: '#4f6ef7', icon: '🌍' },
       { label: 'Fatturato Latente', value: fmt.euro(t.fatturato_latente), sub: `Accettato ma non ancora incassato`, color: '#f59e0b', icon: '⏳' },
       { label: 'Fatturato Incassato', value: fmt.euro(t.fatturato_reale), sub: 'Pagamenti reali in cassa', color: '#10b981', icon: '✅' },
+      { label: 'Margine Netto Totale', value: fmt.euro(t.margine_totale), sub: 'Guadagno netto (preventivi confermati)', color: '#0ea5e9', icon: '💰' },
       { label: 'Preventivi Convertiti', value: t.accettati + t.pagati, sub: `Su ${t.totale_preventivi} totali generati`, color: '#7c3aed', icon: '📈' },
     ];
 
