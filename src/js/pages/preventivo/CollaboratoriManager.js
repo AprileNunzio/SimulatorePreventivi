@@ -21,9 +21,17 @@ export default {
           </div>
         </div>
         <div style="text-align:right">
-          <div style="font-weight:600;font-size:13px;color:var(--success)">${fmt.euro(a.compenso_calcolato)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">Costo Interno</div>
+          <div style="font-weight:600;font-size:13px;color:var(--danger)">${fmt.euro(a.compenso_calcolato)}</div>
           <div style="font-size:11px;color:var(--text-muted)">
             ${a.tipo_compenso==='percentuale' ? `${a.percentuale_applicata}% imponibile` : 'Fisso'}
+          </div>
+        </div>
+        <div style="text-align:right; margin-left: 15px;">
+          <div style="font-size:11px;color:var(--text-muted)">In Preventivo</div>
+          <div style="font-weight:600;font-size:13px;color:var(--success)">${fmt.euro(a.prezzo_al_cliente || 0)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">
+            ${a.titolo_voce || 'Installazione'}
           </div>
         </div>
         <button class="btn-icon" style="color:var(--danger)" onclick="PreventivoDetail.removeCollab(${a.id},${prevId})">✕</button>
@@ -54,6 +62,22 @@ export default {
           <label class="form-label">Percentuale (%)</label>
           <input type="number" class="form-input" id="m-pct" value="10" min="0" max="100" step="0.1">
         </div>
+      </div>
+      <hr style="margin: 15px 0; border: none; border-top: 1px solid var(--border);">
+      <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase;">Addebito al Cliente</div>
+      <div class="form-group">
+        <label class="form-label">Titolo nel Preventivo</label>
+        <select class="form-select" id="m-titolo-voce" onchange="if(this.value==='Altro') {document.getElementById('m-titolo-custom').style.display='block'} else {document.getElementById('m-titolo-custom').style.display='none'}">
+          <option value="Installazione">Installazione</option>
+          <option value="Configurazione">Configurazione</option>
+          <option value="Manodopera">Manodopera</option>
+          <option value="Altro">Altro (Specifica)</option>
+        </select>
+        <input type="text" class="form-input" id="m-titolo-custom" style="display:none; margin-top:8px;" placeholder="Es. Assistenza Tecnica">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prezzo al Cliente (€)</label>
+        <input type="number" class="form-input" id="m-prezzo-cliente" value="0" min="0" step="0.01">
       </div>`,
       `<button class="btn btn-ghost" onclick="Modal.close()">Annulla</button>
        <button class="btn btn-primary" id="m-save-collab">Assegna</button>`
@@ -70,12 +94,18 @@ export default {
 
     document.getElementById('m-save-collab')?.addEventListener('click', async () => {
       const tipo = document.getElementById('m-tipo')?.value;
+      const selectTitolo = document.getElementById('m-titolo-voce')?.value;
+      const customTitolo = document.getElementById('m-titolo-custom')?.value;
+      const titolo_voce = selectTitolo === 'Altro' ? (customTitolo || 'Altro') : selectTitolo;
+
       await window.electronAPI.createAssegnazione({
         preventivo_id: prevId,
         collaboratore_id: parseInt(document.getElementById('m-collab')?.value),
         tipo_compenso: tipo,
         percentuale_applicata: tipo === 'percentuale' ? parseFloat(document.getElementById('m-pct')?.value||0) : 0,
         compenso_fisso: tipo === 'fisso' ? parseFloat(document.getElementById('m-fisso')?.value||0) : 0,
+        titolo_voce: titolo_voce,
+        prezzo_al_cliente: parseFloat(document.getElementById('m-prezzo-cliente')?.value || 0),
       });
       Modal.close();
       toast('Collaboratore assegnato', 'success');

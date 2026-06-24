@@ -7,11 +7,16 @@ export default {
     
     // Calcolo costo del lavoro dalle assegnazioni
     const costoLavoro = (prev.assegnazioni || []).reduce((acc, a) => acc + (parseFloat(a.compenso_calcolato) || 0), 0);
-    const costoMateriali = (parseFloat(prev.totale_costo) || 0);
-    const costoTotaleReale = costoMateriali + costoLavoro;
+    const venditaLavoro = (prev.assegnazioni || []).reduce((acc, a) => acc + (parseFloat(a.prezzo_al_cliente) || 0), 0);
+    
+    const costoTotaleReale = parseFloat(prev.totale_costo) || 0;
+    const costoMateriali = costoTotaleReale - costoLavoro;
     
     const imponibile = parseFloat(prev.totale_imponibile) || 0;
-    const margineEuroNetto = imponibile - costoTotaleReale;
+    const venditaMateriali = imponibile - venditaLavoro;
+    const differenzaMateriali = venditaMateriali - costoMateriali;
+    
+    const margineEuroNetto = parseFloat(prev.margine_euro) || (imponibile - costoTotaleReale);
     const marginePctNetto = imponibile > 0 ? (margineEuroNetto / imponibile) * 100 : 0;
     
     const mClass = marginePctNetto >= 30 ? 'margine-good' : marginePctNetto >= 15 ? 'margine-mid' : 'margine-bad';
@@ -22,6 +27,10 @@ export default {
         <div class="riepilogo-row" style="padding:4px 0; border:none;">
           <span class="riepilogo-label" style="font-size:13px;">Costi Materiali (Magazzino)</span>
           <span class="riepilogo-value" style="font-size:13px; color:var(--danger)">${fmt.euro(costoMateriali)}</span>
+        </div>
+        <div class="riepilogo-row" style="padding:4px 0; border:none;">
+          <span class="riepilogo-label" style="font-size:13px;">Differenza su Materiali</span>
+          <span class="riepilogo-value" style="font-size:13px; color:${differenzaMateriali >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmt.euro(differenzaMateriali)}</span>
         </div>
         <div class="riepilogo-row" style="padding:4px 0; border:none;">
           <span class="riepilogo-label" style="font-size:13px;">Costi Manodopera (Collab.)</span>

@@ -275,7 +275,47 @@ async function generatePdf({ preventivo, voci, assegnazioni, impostazioni, modal
         }
 
         y += rowH;
+        y += rowH;
       });
+
+      // Righe assegnazioni (manodopera/installazione addebitata al cliente)
+      if (assegnazioni && assegnazioni.length > 0) {
+        assegnazioni.forEach((ass, idx) => {
+          const prezzo = parseFloat(ass.prezzo_al_cliente) || 0;
+          if (prezzo === 0 && modalita !== 'dettagliata') return; // Nascondi se zero in modalità aggregata
+
+          const rowH = 22;
+          if (y + rowH > H - 200) {
+            doc.addPage({ margins: { top: 0, bottom: 0, left: 0, right: 0 } });
+            y = 40;
+          }
+
+          const bg = (voci.length + idx) % 2 === 0 ? COLORS.white : COLORS.altRow;
+          doc.rect(margin, y, contentW, rowH).fill(bg);
+          doc.rect(margin, y, 3, rowH).fill(COLORS.primary);
+
+          if (isDettagliata) {
+            doc.fontSize(8.5).fillColor(COLORS.text).font('Helvetica-Bold')
+              .text(ass.titolo_voce || 'Installazione', margin + 7, y + 4, { width: cols[0].w - 11 });
+            doc.fontSize(8.5).fillColor(COLORS.text).font('Helvetica')
+              .text('1', cols[1].x + 4, y + 4, { width: cols[1].w - 8, align: 'center' });
+            doc.fontSize(8.5).fillColor(COLORS.textLight).font('Helvetica')
+              .text('ls', cols[2].x + 4, y + 4, { width: cols[2].w - 8, align: 'center' });
+            doc.fontSize(8.5).fillColor(COLORS.text).font('Helvetica')
+              .text(formatEuro(prezzo), cols[3].x + 4, y + 4, { width: cols[3].w - 8, align: 'right' });
+            doc.fontSize(8.5).fillColor(COLORS.textLight).font('Helvetica')
+              .text('—', cols[4].x + 4, y + 4, { width: cols[4].w - 8, align: 'center' });
+            doc.fontSize(9).fillColor(COLORS.primary).font('Helvetica-Bold')
+              .text(formatEuro(prezzo), cols[5].x + 4, y + 4, { width: cols[5].w - 8, align: 'right' });
+          } else {
+            doc.fontSize(8.5).fillColor(COLORS.text).font('Helvetica-Bold')
+              .text(ass.titolo_voce || 'Installazione', margin + 7, y + 4, { width: cols[0].w - 11 });
+            doc.fontSize(8).fillColor(COLORS.textLight).font('Helvetica')
+              .text(`1 ls`, cols[1].x + 4, y + 4, { width: cols[1].w - 8, align: 'right' });
+          }
+          y += rowH;
+        });
+      }
 
       // Riga fine tabella
       doc.rect(margin, y, contentW, 2).fill(COLORS.primary);

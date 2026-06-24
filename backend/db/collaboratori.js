@@ -86,13 +86,13 @@ function createAssegnazione(data) {
   }
   run(`
     INSERT OR REPLACE INTO assegnazioni_preventivo
-    (preventivo_id, collaboratore_id, tipo_compenso, compenso_fisso, percentuale_applicata, compenso_calcolato, note)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    (preventivo_id, collaboratore_id, tipo_compenso, compenso_fisso, percentuale_applicata, compenso_calcolato, titolo_voce, prezzo_al_cliente, note)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     data.preventivo_id, data.collaboratore_id,
     data.tipo_compenso || 'percentuale',
     data.compenso_fisso || 0, data.percentuale_applicata || 0,
-    compenso, data.note || ''
+    compenso, data.titolo_voce || 'Installazione', data.prezzo_al_cliente || 0, data.note || ''
   ]);
   const created = get('SELECT id FROM assegnazioni_preventivo ORDER BY id DESC LIMIT 1');
   persistDb();
@@ -108,9 +108,11 @@ function updateAssegnazione(id, data) {
   const pct = data.percentuale_applicata !== undefined ? data.percentuale_applicata : a.percentuale_applicata;
   let compenso = data.compenso_fisso !== undefined ? data.compenso_fisso : a.compenso_fisso;
   if (tipo === 'percentuale' && prev) compenso = prev.totale_imponibile * (parseFloat(pct) / 100);
+  const titolo = data.titolo_voce !== undefined ? data.titolo_voce : a.titolo_voce;
+  const prezzoClient = data.prezzo_al_cliente !== undefined ? data.prezzo_al_cliente : a.prezzo_al_cliente;
   run(
-    `UPDATE assegnazioni_preventivo SET tipo_compenso=?, compenso_fisso=?, percentuale_applicata=?, compenso_calcolato=?, note=? WHERE id=?`,
-    [tipo, data.compenso_fisso || 0, pct, compenso, data.note || a.note, id]
+    `UPDATE assegnazioni_preventivo SET tipo_compenso=?, compenso_fisso=?, percentuale_applicata=?, compenso_calcolato=?, titolo_voce=?, prezzo_al_cliente=?, note=? WHERE id=?`,
+    [tipo, data.compenso_fisso || 0, pct, compenso, titolo, prezzoClient, data.note || a.note, id]
   );
   persistDb();
   triggerBackup();

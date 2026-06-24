@@ -186,6 +186,8 @@ function createTables() {
       compenso_fisso REAL DEFAULT 0,
       percentuale_applicata REAL DEFAULT 0,
       compenso_calcolato REAL DEFAULT 0,
+      titolo_voce TEXT DEFAULT 'Installazione',
+      prezzo_al_cliente REAL DEFAULT 0,
       note TEXT DEFAULT '',
       created_at TEXT DEFAULT (datetime('now')),
       UNIQUE(preventivo_id, collaboratore_id)
@@ -230,6 +232,10 @@ function createTables() {
       data_variazione TEXT DEFAULT (datetime('now'))
     );
   `);
+
+  // Migrazione per database esistenti
+  try { db.run("ALTER TABLE assegnazioni_preventivo ADD COLUMN titolo_voce TEXT DEFAULT 'Installazione'"); } catch (e) { /* ignore se già esiste */ }
+  try { db.run("ALTER TABLE assegnazioni_preventivo ADD COLUMN prezzo_al_cliente REAL DEFAULT 0"); } catch (e) { /* ignore */ }
 
   // Impostazioni default
   const defaults = [
@@ -334,11 +340,6 @@ function ricalcolaPreventivo(preventivoId) {
     totale_costo += costo_voce;
   });
 
-  const totale_iva = totale_imponibile * iva;
-  const totale_ivato = totale_imponibile + totale_iva;
-  const margine_euro = totale_imponibile - totale_costo;
-  const margine_pct = totale_imponibile > 0 ? (margine_euro / totale_imponibile) * 100 : 0;
-
   // Ricalcola assegnazioni
   const assegnazioni = all('SELECT * FROM assegnazioni_preventivo WHERE preventivo_id = ?', [preventivoId]);
   assegnazioni.forEach(a => {
@@ -347,7 +348,18 @@ function ricalcolaPreventivo(preventivoId) {
       compenso = totale_imponibile * (parseFloat(a.percentuale_applicata) / 100);
     }
     db.run('UPDATE assegnazioni_preventivo SET compenso_calcolato = ? WHERE id = ?', [compenso, a.id]);
+    
+    // Aggiungiamo il costo interno del collaboratore al totale_costo
+    totale_costo += compenso;
+    // Aggiungiamo il prezzo di vendita al cliente all'imponibile
+    totale_imponibile += parseFloat(a.prezzo_al_cliente) || 0;
   });
+
+  const totale_iva = totale_imponibile * iva;
+  const totale_ivato = totale_imponibile + totale_iva;
+  const margine_euro = totale_imponibile - totale_costo;
+  const margine_pct = totale_imponibile > 0 ? (margine_euro / totale_imponibile) * 100 : 0;
+
 
   db.run(`
     UPDATE preventivi SET
