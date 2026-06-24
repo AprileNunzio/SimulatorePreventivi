@@ -70,7 +70,7 @@ function getDashboardKpi() {
   const perMese = Object.values(meseMap).sort((a, b) => a.mese.localeCompare(b.mese)).slice(-12);
 
   // Goal
-  const impostazioni = core.all('SELECT chiave, valore FROM impostazioni WHERE chiave = "obiettivo_fatturato_annuale"');
+  const impostazioni = all('SELECT chiave, valore FROM impostazioni WHERE chiave = "obiettivo_fatturato_annuale"');
   const obiettivo_fatturato_annuale = impostazioni.length ? parseFloat(impostazioni[0].valore) || 50000 : 50000;
 
   return { totali, recenti, perMese, top_products, obiettivo_fatturato_annuale };
@@ -89,21 +89,21 @@ function getFollowupPreventivi() {
 
 function getPreventiviInScadenza() {
   const query = `
-    SELECT id, codice, cliente_nome, scadenza, totale_ivato
+    SELECT id, codice, cliente_nome, data_scadenza as scadenza, totale_ivato
     FROM preventivi
     WHERE stato = 'inviato' 
-      AND scadenza IS NOT NULL 
-      AND scadenza != ''
+      AND data_scadenza IS NOT NULL 
+      AND data_scadenza != ''
       AND (
-        -- Assumiamo formato scadenza DD/MM/YYYY
-        CAST(substr(scadenza, 7, 4) || '-' || substr(scadenza, 4, 2) || '-' || substr(scadenza, 1, 2) AS DATE)
+        -- Assumiamo formato data_scadenza DD/MM/YYYY
+        CAST(substr(data_scadenza, 7, 4) || '-' || substr(data_scadenza, 4, 2) || '-' || substr(data_scadenza, 1, 2) AS DATE)
         BETWEEN date('now') AND date('now', '+3 days')
       )
-    ORDER BY substr(scadenza, 7, 4) || substr(scadenza, 4, 2) || substr(scadenza, 1, 2) ASC
+    ORDER BY substr(data_scadenza, 7, 4) || substr(data_scadenza, 4, 2) || substr(data_scadenza, 1, 2) ASC
   `;
   // Fallback a JS parsing se la query SQL su stringhe custom fallisce o è complessa
   // SQLite non ha il tipo Date nativo. Preleviamo tutti gli inviati e filtriamo in JS per sicurezza.
-  const inviati = all("SELECT id, codice, cliente_nome, scadenza, totale_ivato FROM preventivi WHERE stato = 'inviato'");
+  const inviati = all("SELECT id, codice, cliente_nome, data_scadenza as scadenza, totale_ivato FROM preventivi WHERE stato = 'inviato'");
   
   const now = new Date();
   now.setHours(0,0,0,0);
