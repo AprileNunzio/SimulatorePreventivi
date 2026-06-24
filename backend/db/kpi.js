@@ -40,7 +40,7 @@ function getDashboardKpi() {
 
   // Bestsellers (Prodotti più venduti nei preventivi accettati/pagati)
   const voci_accettate = all(`
-    SELECT v.descrizione, v.quantita, v.prezzo_unitario, v.sconto_percentuale 
+    SELECT v.descrizione, v.quantita, v.prezzo_vendita as prezzo_unitario, v.sconto_percentuale 
     FROM voci_preventivo v
     JOIN preventivi p ON v.preventivo_id = p.id
     WHERE p.stato IN ('accettato', 'pagato')
