@@ -1,0 +1,981 @@
+import { fmt, statoLabels, statoBadge, marginePill, Modal, toast, Router } from '../utils.js';
+
+// ═══ PREVENTIVO DETAIL ════════════════════════════════════
+
+export default {
+  data: null,
+  mode: 'view',
+
+  async render(el, params = {}) {
+    if (params.mode === 'create') {
+      this.mode = 'create';
+      this.data = null;
+      this.renderForm(el, null);
+      return;
+    }
+    if (params.id) {
+      const prev = await window.electronAPI.getPreventivoById(params.id);
+      this.data = prev;
+      if (params.mode === 'edit') {
+        this.mode = 'edit';
+        this.renderForm(el, prev);
+      } else {
+        this.mode = 'view';
+        this.renderView(el, prev);
+      }
+      return;
+    }
+  },
+
+  renderForm(el, prev) {
+    const isNew = !prev;
+    el.innerHTML = `
+      <div class="page-header">
+        <div>
+          <button class="back-btn" id="btn-back-prev">
+            ← ${isNew ? 'Preventivi' : prev.codice}
+          </button>
+          <h1 class="page-title">${isNew ? 'Nuovo Preventivo' : 'Modifica Preventivo'}</h1>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost" id="btn-cancel-form">Annulla</button>
+          <button class="btn btn-primary" id="btn-save-prev">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+            Salva
+          </button>
+        </div>
+      </div>
+      <div style="padding:24px 32px;max-width:900px">
+        <div class="card" style="margin-bottom:20px">
+          <div class="section-title" style="margin-bottom:16px">DATI DOCUMENTO</div>
+          <div class="form-row cols-3">
+            <div class="form-group">
+              <label class="form-label">Titolo / Oggetto *</label>
+              <input type="text" class="form-input" id="f-titolo" value="${prev?.titolo||''}" placeholder="Es. Realizzazione sito web">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Data Emissione</label>
+              <input type="date" class="form-input" id="f-data" value="${prev?.data_creazione || new Date().toISOString().split('T')[0]}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Data Scadenza</label>
+              <input type="date" class="form-input" id="f-scadenza" value="${prev?.data_scadenza||''}">
+            </div>
+          </div>
+          <div class="form-row cols-3">
+            <div class="form-group">
+              <label class="form-label">Stato</label>
+              <select class="form-select" id="f-stato">
+                ${['bozza','inviato','accettato','pagato','rifiutato'].map(s =>
+                  `<option value="${s}" ${prev?.stato===s?'selected':''}>${statoLabels[s]}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">IVA (%)</label>
+              <input type="number" class="form-input" id="f-iva" value="${prev?.iva_percentuale||22}" min="0" max="100" step="0.1">
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px; position: relative; overflow: visible;">
+          <div class="section-title" style="margin-bottom:16px">DATI CLIENTE</div>
+          <div class="form-row cols-2">
+            <div class="form-group" style="position:relative">
+              <label class="form-label">Nome Referente / Cliente *</label>
+              <input type="text" class="form-input" id="f-cnome" value="${prev?.cliente_nome||''}" placeholder="Mario Rossi" autocomplete="off">
+              <div id="clienti-suggerimenti" style="position:absolute; top:100%; left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:100; max-height:200px; overflow-y:auto; display:none;"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ragione Sociale</label>
+              <input type="text" class="form-input" id="f-crs" value="${prev?.cliente_ragione_sociale||''}" placeholder="Rossi S.r.l." autocomplete="off">
+            </div>
+          </div>
+          <div class="form-row cols-3">
+            <div class="form-group">
+              <label class="form-label">P.IVA</label>
+              <input type="text" class="form-input" id="f-cpiva" value="${prev?.cliente_piva||''}" placeholder="IT00000000000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Codice Fiscale</label>
+              <input type="text" class="form-input" id="f-ccf" value="${prev?.cliente_cf||''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Telefono</label>
+              <input type="text" class="form-input" id="f-ctel" value="${prev?.cliente_telefono||''}" placeholder="+39 02 ...">
+            </div>
+          </div>
+          <div class="form-row cols-2">
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" id="f-cemail" value="${prev?.cliente_email||''}" placeholder="cliente@email.it">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Indirizzo</label>
+              <input type="text" class="form-input" id="f-cind" value="${prev?.cliente_indirizzo||''}" placeholder="Via Roma, 1">
+            </div>
+          </div>
+          <div class="form-row cols-3">
+            <div class="form-group">
+              <label class="form-label">Città</label>
+              <input type="text" class="form-input" id="f-ccitta" value="${prev?.cliente_citta||''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">CAP</label>
+              <input type="text" class="form-input" id="f-ccap" value="${prev?.cliente_cap||''}">
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+          <div class="section-title" style="margin-bottom:16px">NOTE</div>
+          <div class="form-group">
+            <label class="form-label">Note per il cliente</label>
+            <textarea class="form-textarea" id="f-notecl" placeholder="Note che appariranno nel preventivo PDF...">${prev?.note_cliente||''}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Condizioni di pagamento</label>
+            <input type="text" class="form-input" id="f-condpag" value="${prev?.condizioni_pagamento||''}" placeholder="Es. Bonifico a 30 giorni dalla data fattura">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Note interne (non appaiono nel PDF)</label>
+            <textarea class="form-textarea" id="f-notein" placeholder="Note per uso interno...">${prev?.note_interne||''}</textarea>
+          </div>
+        </div>
+      </div>`;
+
+    el.querySelector('#btn-back-prev')?.addEventListener('click', () => {
+      if (isNew) Router.navigate('preventivi');
+      else Router.navigate('preventivo-detail', { id: prev.id });
+    });
+
+    el.querySelector('#btn-cancel-form')?.addEventListener('click', () => {
+      if (isNew) Router.navigate('preventivi');
+      else Router.navigate('preventivo-detail', { id: prev.id });
+    });
+
+    el.querySelector('#btn-save-prev')?.addEventListener('click', async () => {
+      await this.saveForm(el, prev?.id);
+    });
+
+    // ─── LIVE SEARCH CLIENTI ───
+    let searchTimeout = null;
+    const suggBox = el.querySelector('#clienti-suggerimenti');
+    
+    const handleSearch = async (e) => {
+      const q = e.target.value;
+      if (!q || q.length < 2) { suggBox.style.display = 'none'; return; }
+      
+      if (searchTimeout) clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async () => {
+        const res = await window.electronAPI.searchClienti(q);
+        if (!res || res.error || res.length === 0) {
+          suggBox.style.display = 'none';
+          return;
+        }
+        
+        suggBox.innerHTML = res.map(c => `
+          <div class="sugg-item" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--border); font-size:13px;"
+               data-client='${JSON.stringify(c).replace(/'/g, "&apos;")}'>
+            <div style="font-weight:600">${c.nome}</div>
+            ${c.ragione_sociale ? `<div style="font-size:11px;color:var(--text-muted)">${c.ragione_sociale}</div>` : ''}
+            ${c.piva ? `<div style="font-size:11px;color:var(--text-muted)">P.IVA: ${c.piva}</div>` : ''}
+          </div>
+        `).join('');
+        suggBox.style.display = 'block';
+
+        suggBox.querySelectorAll('.sugg-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const c = JSON.parse(item.dataset.client.replace(/&apos;/g, "'"));
+            el.querySelector('#f-cnome').value = c.nome || '';
+            el.querySelector('#f-crs').value = c.ragione_sociale || '';
+            el.querySelector('#f-cpiva').value = c.piva || '';
+            el.querySelector('#f-ccf').value = c.cf || '';
+            el.querySelector('#f-cemail').value = c.email || '';
+            el.querySelector('#f-ctel').value = c.telefono || '';
+            el.querySelector('#f-cind').value = c.indirizzo || '';
+            el.querySelector('#f-ccitta').value = c.citta || '';
+            el.querySelector('#f-ccap').value = c.cap || '';
+            suggBox.style.display = 'none';
+          });
+          item.addEventListener('mouseenter', () => item.style.backgroundColor = 'var(--bg)');
+          item.addEventListener('mouseleave', () => item.style.backgroundColor = 'transparent');
+        });
+      }, 300);
+    };
+
+    el.querySelector('#f-cnome')?.addEventListener('input', handleSearch);
+    el.querySelector('#f-crs')?.addEventListener('input', handleSearch);
+    
+    // Nascondi suggerimenti se clicchi fuori
+    document.addEventListener('click', (e) => {
+      if (suggBox && !e.target.closest('#f-cnome') && !e.target.closest('#f-crs') && !e.target.closest('#clienti-suggerimenti')) {
+        suggBox.style.display = 'none';
+      }
+    });
+  },
+
+  async saveForm(el, id) {
+    const titolo = el.querySelector('#f-titolo')?.value.trim();
+    const cliente_nome = el.querySelector('#f-cnome')?.value.trim();
+    if (!titolo || !cliente_nome) {
+      toast('Titolo e Nome Cliente sono obbligatori', 'error'); return;
+    }
+
+    const data = {
+      titolo,
+      cliente_nome,
+      cliente_ragione_sociale: el.querySelector('#f-crs')?.value || '',
+      cliente_piva: el.querySelector('#f-cpiva')?.value || '',
+      cliente_cf: el.querySelector('#f-ccf')?.value || '',
+      cliente_email: el.querySelector('#f-cemail')?.value || '',
+      cliente_telefono: el.querySelector('#f-ctel')?.value || '',
+      cliente_indirizzo: el.querySelector('#f-cind')?.value || '',
+      cliente_citta: el.querySelector('#f-ccitta')?.value || '',
+      cliente_cap: el.querySelector('#f-ccap')?.value || '',
+      data_creazione: el.querySelector('#f-data')?.value || new Date().toISOString().split('T')[0],
+      data_scadenza: el.querySelector('#f-scadenza')?.value || '',
+      stato: el.querySelector('#f-stato')?.value || 'bozza',
+      iva_percentuale: parseFloat(el.querySelector('#f-iva')?.value) || 22,
+      note_cliente: el.querySelector('#f-notecl')?.value || '',
+      note_interne: el.querySelector('#f-notein')?.value || '',
+      condizioni_pagamento: el.querySelector('#f-condpag')?.value || '',
+    };
+
+    try {
+      let newId = id;
+      if (!id) {
+        const res = await window.electronAPI.createPreventivo(data);
+        if (res && res.success === false) throw new Error(res.error);
+        newId = res.id;
+        toast(`Preventivo ${res.codice || ''} creato!`, 'success');
+      } else {
+        const res = await window.electronAPI.updatePreventivo(id, data);
+        if (res && res.success === false) throw new Error(res.error);
+        toast('Preventivo aggiornato', 'success');
+      }
+      Router.navigate('preventivo-detail', { id: newId });
+    } catch (e) {
+      toast('Errore salvataggio: ' + e.message, 'error');
+    }
+  },
+
+  async renderView(el, prev) {
+    if (!prev) { toast('Preventivo non trovato', 'error'); Router.navigate('preventivi'); return; }
+
+    el.innerHTML = `
+      <div class="page-header">
+        <div>
+          <button class="back-btn" onclick="Router.navigate('preventivi')">← Preventivi</button>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+            <h1 class="page-title" style="font-family:var(--font-mono);font-size:18px">${prev.codice}</h1>
+            ${statoBadge(prev.stato)}
+          </div>
+          <p class="page-subtitle" style="margin-top:4px">${prev.titolo}</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" id="btn-edit-prev">✏️ Modifica</button>
+          <button class="btn btn-secondary btn-sm" id="btn-dup-prev">📋 Duplica</button>
+          <button class="btn btn-primary" id="btn-email-prev" style="background:#4f46e5;color:white;border:none">✉️ Invia Email</button>
+          <button class="btn btn-success" id="btn-doc-prev" style="background:var(--success);color:white;border:none">📄 Genera Documentazione</button>
+        </div>
+      </div>
+
+      <div class="detail-layout">
+        <div class="detail-main">
+          <!-- Info documento + cliente -->
+          <div class="card" style="margin-bottom:20px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+              <div>
+                <div class="section-title" style="margin-bottom:12px">DOCUMENTO</div>
+                <div class="info-grid">
+                  <div class="info-item"><label>Data emissione</label><span>${fmt.date(prev.data_creazione)}</span></div>
+                  <div class="info-item"><label>Scadenza</label><span>${fmt.date(prev.data_scadenza)}</span></div>
+                  <div class="info-item"><label>IVA</label><span>${prev.iva_percentuale}%</span></div>
+                  <div class="info-item"><label>Condiz. pagamento</label><span style="font-size:12px">${prev.condizioni_pagamento || '—'}</span></div>
+                </div>
+              </div>
+              <div style="border-left:1px solid var(--border);padding-left:24px">
+                <div class="section-title" style="margin-bottom:12px">CLIENTE</div>
+                <div style="font-size:15px;font-weight:700;margin-bottom:4px">${prev.cliente_ragione_sociale || prev.cliente_nome}</div>
+                ${prev.cliente_ragione_sociale && prev.cliente_ragione_sociale !== prev.cliente_nome ?
+                  `<div style="font-size:13px;color:var(--text-muted);margin-bottom:6px">${prev.cliente_nome}</div>` : ''}
+                <div class="info-grid" style="margin-top:8px">
+                  ${prev.cliente_piva ? `<div class="info-item"><label>P.IVA</label><span>${prev.cliente_piva}</span></div>` : ''}
+                  ${prev.cliente_email ? `<div class="info-item"><label>Email</label><span>${prev.cliente_email}</span></div>` : ''}
+                  ${prev.cliente_telefono ? `<div class="info-item"><label>Telefono</label><span>${prev.cliente_telefono}</span></div>` : ''}
+                  ${prev.cliente_indirizzo ? `<div class="info-item"><label>Indirizzo</label><span>${prev.cliente_indirizzo}${prev.cliente_citta ? ', '+prev.cliente_citta : ''}</span></div>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Voci preventivo -->
+          <div class="card" style="margin-bottom:20px">
+            <div class="section-header">
+              <span class="section-title">VOCI PREVENTIVO</span>
+              <button class="btn btn-primary btn-sm" id="btn-add-voce">
+                + Aggiungi voce
+              </button>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="voci-table" id="voci-table">
+                <thead>
+                  <tr>
+                    <th style="width:30%">Descrizione</th>
+                    <th style="width:8%">Qtà</th>
+                    <th style="width:6%">U.M.</th>
+                    <th style="width:12%">P. Acquisto</th>
+                    <th style="width:12%">P. Vendita</th>
+                    <th style="width:10%">Spese acc.</th>
+                    <th style="width:7%">Sconto%</th>
+                    <th style="width:10%">Totale</th>
+                    <th style="width:5%"></th>
+                  </tr>
+                </thead>
+                <tbody id="voci-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Collaboratori -->
+          <div class="card">
+            <div class="section-header">
+              <span class="section-title">COLLABORATORI ASSEGNATI</span>
+              <button class="btn btn-ghost btn-sm" id="btn-add-collab">+ Assegna</button>
+            </div>
+            <div id="collab-list"></div>
+          </div>
+        </div>
+
+        <!-- Riepilogo -->
+        <div class="detail-aside">
+          <div class="riepilogo-box" style="position:sticky;top:80px">
+            <div class="section-title" style="margin-bottom:14px">RIEPILOGO ECONOMICO</div>
+            <div id="riepilogo-content"></div>
+          </div>
+        </div>
+      </div>`;
+
+    el.querySelector('#btn-edit-prev')?.addEventListener('click', () =>
+      Router.navigate('preventivo-detail', { mode: 'edit', id: prev.id }));
+
+    el.querySelector('#btn-dup-prev')?.addEventListener('click', () =>
+      Pages.preventivi.duplica(prev.id));
+
+    el.querySelector('#btn-doc-prev')?.addEventListener('click', () =>
+      this.openDocModal(prev.id));
+
+    el.querySelector('#btn-email-prev')?.addEventListener('click', () =>
+      this.sendEmailModal(prev.id));
+
+    el.querySelector('#btn-add-voce')?.addEventListener('click', () =>
+      this.addVoce(prev.id, el));
+
+    el.querySelector('#btn-add-collab')?.addEventListener('click', () =>
+      this.addCollab(prev.id, el));
+
+    this.renderVoci(el, prev.voci || [], prev.id);
+    this.renderRiepilogo(el, prev);
+    this.renderCollaboratori(el, prev.assegnazioni || [], prev.id);
+
+    // Edit mode via params
+  },
+
+  renderVoci(el, voci, prevId) {
+    const tbody = el.querySelector('#voci-tbody');
+    if (!tbody) return;
+
+    if (!voci.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted)">
+        Nessuna voce. Clicca "+ Aggiungi voce" per iniziare.
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = voci.map(v => `
+      <tr data-voce-id="${v.id}">
+        <td>
+          <div style="position:relative">
+            <input class="desc-input" type="text" value="${v.descrizione}" placeholder="Descrizione"
+              onchange="PreventivoDetail.updateVoce(${v.id},'descrizione',this.value,${prevId})"
+              oninput="PreventivoDetail.handleAutocomplete(this, ${v.id}, ${prevId})"
+              onblur="setTimeout(()=>document.getElementById('dd-${v.id}')?.remove(), 200)">
+          </div>
+          <input class="desc-input" type="text" value="${v.descrizione_estesa||''}" placeholder="Dettaglio (opzionale)"
+            style="font-size:11px;color:var(--text-muted);margin-top:2px"
+            onchange="PreventivoDetail.updateVoce(${v.id},'descrizione_estesa',this.value,${prevId})">
+        </td>
+        <td><input class="num-input" type="number" value="${v.quantita}" min="0" step="0.01"
+          onchange="PreventivoDetail.updateVoce(${v.id},'quantita',parseFloat(this.value)||1,${prevId})"></td>
+        <td>
+          <select class="num-input" style="text-align:left;padding:4px"
+            onchange="PreventivoDetail.updateVoce(${v.id},'unita_misura',this.value,${prevId})">
+            ${['pz','h','gg','kg','m','m²','m³','km','ls'].map(u =>
+              `<option ${v.unita_misura===u?'selected':''}>${u}</option>`).join('')}
+          </select>
+        </td>
+        <td><div class="input-group" style="position:relative">
+          <span class="input-prefix" style="font-size:11px;left:4px">€</span>
+          <input class="num-input" type="number" value="${v.prezzo_acquisto}" min="0" step="0.01" style="padding-left:16px"
+            onchange="PreventivoDetail.updateVoce(${v.id},'prezzo_acquisto',parseFloat(this.value)||0,${prevId})">
+        </div></td>
+        <td><div class="input-group">
+          <span class="input-prefix" style="font-size:11px;left:4px">€</span>
+          <input class="num-input" type="number" value="${v.prezzo_vendita}" min="0" step="0.01" style="padding-left:16px"
+            onchange="PreventivoDetail.updateVoce(${v.id},'prezzo_vendita',parseFloat(this.value)||0,${prevId})">
+        </div></td>
+        <td><div class="input-group">
+          <span class="input-prefix" style="font-size:11px;left:4px">€</span>
+          <input class="num-input" type="number" value="${v.spese_accessorie}" min="0" step="0.01" style="padding-left:16px"
+            onchange="PreventivoDetail.updateVoce(${v.id},'spese_accessorie',parseFloat(this.value)||0,${prevId})">
+        </div></td>
+        <td><input class="num-input" type="number" value="${v.sconto_percentuale}" min="0" max="100" step="0.1"
+          onchange="PreventivoDetail.updateVoce(${v.id},'sconto_percentuale',parseFloat(this.value)||0,${prevId})"></td>
+        <td class="voce-total">${fmt.euro(v.totale_voce)}</td>
+        <td>
+          <button class="btn-icon" style="color:var(--danger)" onclick="PreventivoDetail.deleteVoce(${v.id},${prevId})">✕</button>
+        </td>
+      </tr>`).join('');
+  },
+
+  async updateVoce(voceid, field, value, prevId) {
+    await window.electronAPI.updateVoce(voceid, { [field]: value });
+    const updated = await window.electronAPI.getPreventivoById(prevId);
+    
+    // Controlla se la voce ha una descrizione valida per il magazzino
+    const voce = updated.voci.find(v => v.id === voceid);
+    if (voce && voce.descrizione && voce.descrizione.trim() !== '' && voce.descrizione.trim() !== 'Nuova voce') {
+      const magazzinoData = await window.electronAPI.getMagazzinoByDesc(voce.descrizione.trim());
+      if (!magazzinoData) {
+        // Auto-aggiungi al magazzino (silenzioso)
+        await window.electronAPI.addProdottoMagazzino({
+          descrizione: voce.descrizione.trim(),
+          unita_misura: voce.unita_misura,
+          prezzo_acquisto: voce.prezzo_acquisto,
+          prezzo_vendita: voce.prezzo_vendita,
+          spese_accessorie: voce.spese_accessorie,
+          sconto_percentuale: voce.sconto_percentuale
+        });
+      } else if (field === 'prezzo_acquisto' || field === 'prezzo_vendita' || field === 'spese_accessorie' || field === 'sconto_percentuale') {
+        // Esiste e i prezzi potrebbero essere diversi
+        if (magazzinoData.prezzo_acquisto != voce.prezzo_acquisto || magazzinoData.prezzo_vendita != voce.prezzo_vendita) {
+          Modal.show('Aggiornamento Prezzi Magazzino', `
+            <p>Hai modificato i prezzi di <strong>${voce.descrizione}</strong>.</p>
+            <p>Vuoi aggiornare anche il Listino in Magazzino con i nuovi prezzi?</p>
+            <div style="background:var(--bg-light);padding:12px;border-radius:8px;margin-top:12px;font-size:13px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span>Listino Attuale:</span>
+                <span style="color:var(--text-muted)">Acquisto: ${fmt.euro(magazzinoData.prezzo_acquisto)} / Vendita: ${fmt.euro(magazzinoData.prezzo_vendita)}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-weight:bold">
+                <span>Nuovo Listino:</span>
+                <span style="color:var(--accent-color)">Acquisto: ${fmt.euro(voce.prezzo_acquisto)} / Vendita: ${fmt.euro(voce.prezzo_vendita)}</span>
+              </div>
+            </div>
+          `, `
+            <button class="btn btn-ghost" onclick="Modal.close()">No, solo per questo preventivo</button>
+            <button class="btn btn-primary" id="m-confirm-magazzino">Sì, aggiorna magazzino</button>
+          `);
+
+          document.getElementById('m-confirm-magazzino')?.addEventListener('click', async () => {
+            await window.electronAPI.updateProdottoMagazzino(magazzinoData.id, {
+              prezzo_acquisto: voce.prezzo_acquisto,
+              prezzo_vendita: voce.prezzo_vendita,
+              spese_accessorie: voce.spese_accessorie,
+              sconto_percentuale: voce.sconto_percentuale
+            });
+            toast('Magazzino aggiornato con successo', 'success');
+            Modal.close();
+          });
+        }
+      }
+    }
+
+    const el = document.getElementById('page-preventivo-detail');
+    this.renderVoci(el, updated.voci || [], prevId);
+    this.renderRiepilogo(el, updated);
+    this.data = updated;
+  },
+
+  async handleAutocomplete(input, voceid, prevId) {
+    const q = input.value.trim();
+    const parent = input.parentElement;
+    let dd = parent.querySelector('#dd-'+voceid);
+    
+    if (q.length < 2) {
+      if (dd) dd.remove();
+      return;
+    }
+
+    const results = await window.electronAPI.searchMagazzino(q);
+    if (!results.length) {
+      if (dd) dd.remove();
+      return;
+    }
+
+    if (!dd) {
+      dd = document.createElement('div');
+      dd.id = 'dd-'+voceid;
+      dd.className = 'autocomplete-dropdown';
+      parent.appendChild(dd);
+    }
+
+    dd.innerHTML = results.map(r => `
+      <div class="ac-item" onclick="PreventivoDetail.applyAutocomplete(${voceid}, ${prevId}, ${r.id})">
+        <div class="ac-title">${r.descrizione}</div>
+        <div class="ac-prices">Acq: ${fmt.euro(r.prezzo_acquisto)} — Ven: ${fmt.euro(r.prezzo_vendita)}</div>
+      </div>
+    `).join('');
+  },
+
+  async applyAutocomplete(voceid, prevId, magazzinoId) {
+    const data = await window.electronAPI.getAllProdottiMagazzino();
+    const r = data.find(p => p.id === magazzinoId);
+    if (!r) return;
+
+    // Aggiorniamo la voce con i dati del magazzino
+    await window.electronAPI.updateVoce(voceid, {
+      descrizione: r.descrizione,
+      unita_misura: r.unita_misura,
+      prezzo_acquisto: r.prezzo_acquisto,
+      prezzo_vendita: r.prezzo_vendita,
+      spese_accessorie: r.spese_accessorie,
+      sconto_percentuale: r.sconto_percentuale
+    });
+    
+    // Ricarichiamo la UI
+    const updated = await window.electronAPI.getPreventivoById(prevId);
+    const el = document.getElementById('page-preventivo-detail');
+    this.renderVoci(el, updated.voci || [], prevId);
+    this.renderRiepilogo(el, updated);
+    this.data = updated;
+  },
+
+  async addVoce(prevId, el) {
+    await window.electronAPI.createVoce({
+      preventivo_id: prevId,
+      descrizione: 'Nuova voce',
+      quantita: 1, unita_misura: 'pz',
+      prezzo_acquisto: 0, prezzo_vendita: 0, spese_accessorie: 0
+    });
+    const updated = await window.electronAPI.getPreventivoById(prevId);
+    this.data = updated;
+    this.renderVoci(el, updated.voci || [], prevId);
+    this.renderRiepilogo(el, updated);
+  },
+
+  async deleteVoce(voceid, prevId) {
+    await window.electronAPI.deleteVoce(voceid);
+    const updated = await window.electronAPI.getPreventivoById(prevId);
+    const el = document.getElementById('page-preventivo-detail');
+    this.data = updated;
+    this.renderVoci(el, updated.voci || [], prevId);
+    this.renderRiepilogo(el, updated);
+  },
+
+  renderRiepilogo(el, prev) {
+    const r = el.querySelector('#riepilogo-content');
+    if (!r) return;
+    
+    // Calcolo costo del lavoro dalle assegnazioni
+    const costoLavoro = (prev.assegnazioni || []).reduce((acc, a) => acc + (parseFloat(a.compenso_calcolato) || 0), 0);
+    const costoMateriali = (parseFloat(prev.totale_costo) || 0);
+    const costoTotaleReale = costoMateriali + costoLavoro;
+    
+    const imponibile = parseFloat(prev.totale_imponibile) || 0;
+    const margineEuroNetto = imponibile - costoTotaleReale;
+    const marginePctNetto = imponibile > 0 ? (margineEuroNetto / imponibile) * 100 : 0;
+    
+    const mClass = marginePctNetto >= 30 ? 'margine-good' : marginePctNetto >= 15 ? 'margine-mid' : 'margine-bad';
+
+    r.innerHTML = `
+      <div style="background:var(--bg-surface); padding:16px; border-radius:8px; border:1px solid var(--border); margin-bottom:16px;">
+        <div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Analisi Costi Interne</div>
+        <div class="riepilogo-row" style="padding:4px 0; border:none;">
+          <span class="riepilogo-label" style="font-size:13px;">Costi Materiali (Magazzino)</span>
+          <span class="riepilogo-value" style="font-size:13px; color:var(--danger)">${fmt.euro(costoMateriali)}</span>
+        </div>
+        <div class="riepilogo-row" style="padding:4px 0; border:none;">
+          <span class="riepilogo-label" style="font-size:13px;">Costi Manodopera (Collab.)</span>
+          <span class="riepilogo-value" style="font-size:13px; color:var(--danger)">${fmt.euro(costoLavoro)}</span>
+        </div>
+        <div class="riepilogo-row" style="padding:8px 0 0 0; border:none; border-top:1px dashed var(--border); margin-top:8px;">
+          <span class="riepilogo-label" style="font-weight:600">Margine Netto Stimato</span>
+          <span class="riepilogo-value">
+            <span class="margine-pill ${mClass}" style="margin-right:6px">${fmt.pct(marginePctNetto)}</span>
+            <strong style="color:${margineEuroNetto >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmt.euro(margineEuroNetto)}</strong>
+          </span>
+        </div>
+      </div>
+
+      <div class="riepilogo-row">
+        <span class="riepilogo-label" style="font-weight:600">Imponibile al Cliente</span>
+        <span class="riepilogo-value">${fmt.euro(prev.totale_imponibile)}</span>
+      </div>
+      <div class="riepilogo-row">
+        <span class="riepilogo-label">IVA ${prev.iva_percentuale}%</span>
+        <span class="riepilogo-value">${fmt.euro(prev.totale_iva)}</span>
+      </div>
+      <div class="riepilogo-total">
+        <div class="riepilogo-row" style="border:none">
+          <span class="riepilogo-label">Totale Preventivo (Ivato)</span>
+          <span class="riepilogo-value">${fmt.euro(prev.totale_ivato)}</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%; margin-top:16px;" onclick="PreventivoDetail.sendEmailModal(${prev.id})">Invia Preventivo via Email</button>
+    `;
+  },
+
+  async renderCollaboratori(el, assegnazioni, prevId) {
+    const collabList = el.querySelector('#collab-list');
+    if (!collabList) return;
+
+    if (!assegnazioni?.length) {
+      collabList.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Nessun collaboratore assegnato</div>`;
+      return;
+    }
+
+    collabList.innerHTML = assegnazioni.map(a => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="avatar">${fmt.initials(a.nome, a.cognome)}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px">${a.nome} ${a.cognome}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${a.ruolo||'Collaboratore'}</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:600;font-size:13px;color:var(--success)">${fmt.euro(a.compenso_calcolato)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">
+            ${a.tipo_compenso==='percentuale' ? `${a.percentuale_applicata}% imponibile` : 'Fisso'}
+          </div>
+        </div>
+        <button class="btn-icon" style="color:var(--danger)" onclick="PreventivoDetail.removeCollab(${a.id},${prevId})">✕</button>
+      </div>`).join('');
+  },
+
+  async addCollab(prevId, el) {
+    const collaboratori = await window.electronAPI.getCollaboratori();
+    if (!collaboratori.length) {
+      toast('Nessun collaboratore in anagrafica. Aggiungine prima uno.', 'warning'); return;
+    }
+
+    Modal.show('Assegna Collaboratore',
+      `<div class="form-group">
+        <label class="form-label">Collaboratore</label>
+        <select class="form-select" id="m-collab">
+          ${collaboratori.map(c => `<option value="${c.id}">${c.cognome} ${c.nome} — ${c.ruolo||'N/D'}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo Compenso</label>
+        <select class="form-select" id="m-tipo">
+          <option value="percentuale">Percentuale sull'imponibile</option>
+          <option value="fisso">Importo fisso</option>
+        </select>
+      </div>
+      <div id="m-comp-wrap">
+        <div class="form-group">
+          <label class="form-label">Percentuale (%)</label>
+          <input type="number" class="form-input" id="m-pct" value="10" min="0" max="100" step="0.1">
+        </div>
+      </div>`,
+      `<button class="btn btn-ghost" onclick="Modal.close()">Annulla</button>
+       <button class="btn btn-primary" id="m-save-collab">Assegna</button>`
+    );
+
+    document.getElementById('m-tipo')?.addEventListener('change', function() {
+      const wrap = document.getElementById('m-comp-wrap');
+      wrap.innerHTML = this.value === 'percentuale'
+        ? `<div class="form-group"><label class="form-label">Percentuale (%)</label>
+           <input type="number" class="form-input" id="m-pct" value="10" min="0" max="100" step="0.1"></div>`
+        : `<div class="form-group"><label class="form-label">Importo Fisso (€)</label>
+           <input type="number" class="form-input" id="m-fisso" value="0" min="0" step="0.01"></div>`;
+    });
+
+    document.getElementById('m-save-collab')?.addEventListener('click', async () => {
+      const tipo = document.getElementById('m-tipo')?.value;
+      await window.electronAPI.createAssegnazione({
+        preventivo_id: prevId,
+        collaboratore_id: parseInt(document.getElementById('m-collab')?.value),
+        tipo_compenso: tipo,
+        percentuale_applicata: tipo === 'percentuale' ? parseFloat(document.getElementById('m-pct')?.value||0) : 0,
+        compenso_fisso: tipo === 'fisso' ? parseFloat(document.getElementById('m-fisso')?.value||0) : 0,
+      });
+      Modal.close();
+      toast('Collaboratore assegnato', 'success');
+      const updated = await window.electronAPI.getPreventivoById(prevId);
+      this.data = updated;
+      this.renderCollaboratori(el, updated.assegnazioni||[], prevId);
+      this.renderRiepilogo(el, updated);
+    });
+  },
+
+  async removeCollab(assId, prevId) {
+    await window.electronAPI.deleteAssegnazione(assId);
+    const el = document.getElementById('page-preventivo-detail');
+    const updated = await window.electronAPI.getPreventivoById(prevId);
+    this.renderCollaboratori(el, updated.assegnazioni||[], prevId);
+  },
+
+  async exportPdf(prevId) {
+    const prev = await window.electronAPI.getPreventivoById(prevId || this.data?.id);
+    if (!prev) { toast('Preventivo non trovato', 'error'); return; }
+    const impostazioni = await window.electronAPI.getImpostazioni();
+
+    Modal.show('Genera PDF', `
+      <p style="color:var(--text-secondary);margin-bottom:20px">
+        Seleziona la modalità di visualizzazione del documento per il cliente.
+      </p>
+      <div class="export-mode-selector">
+        <div class="export-mode-card selected" data-mode="dettagliata" id="mode-det">
+          <div class="export-mode-icon">📋</div>
+          <div class="export-mode-title">Dettagliata</div>
+          <div class="export-mode-desc">Prezzi unitari, quantità e subtotali visibili per ogni voce</div>
+        </div>
+        <div class="export-mode-card" data-mode="aggregata" id="mode-agg">
+          <div class="export-mode-icon">🔒</div>
+          <div class="export-mode-title">Aggregata</div>
+          <div class="export-mode-desc">Solo il totale finale è visibile. Prezzi parziali nascosti</div>
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:12px;color:var(--text-secondary)">
+        ℹ️ Indipendentemente dalla modalità, il riepilogo fiscale completo (imponibile, IVA, totale) è sempre visibile nel footer del documento.
+      </div>`,
+      `<button class="btn btn-ghost" onclick="Modal.close()">Annulla</button>
+       <button class="btn btn-success" id="m-gen-pdf">📄 Genera e Apri PDF</button>`
+    );
+
+    let selectedMode = 'dettagliata';
+    document.querySelectorAll('.export-mode-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.export-mode-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedMode = card.dataset.mode;
+      });
+    });
+
+    document.getElementById('m-gen-pdf')?.addEventListener('click', async () => {
+      Modal.close();
+      toast('Generazione PDF in corso...', 'info', 5000);
+      const res = await window.electronAPI.generatePdf({
+        preventivo: prev, voci: prev.voci||[], assegnazioni: prev.assegnazioni||[],
+        impostazioni, modalita: selectedMode
+      });
+      if (res.success) {
+        toast('PDF generato con successo!', 'success');
+        window.electronAPI.openFile(res.filePath);
+      } else {
+        toast('Errore: ' + res.error, 'error');
+      }
+    });
+  },
+
+  async exportExcel(prevId) {
+    const prev = await window.electronAPI.getPreventivoById(prevId || this.data?.id);
+    if (!prev) { toast('Preventivo non trovato', 'error'); return; }
+    
+    toast('Generazione Excel in corso...', 'info');
+    
+    const impostazioni = await window.electronAPI.getImpostazioni();
+    
+    let pathDest = null;
+    try {
+      const saveRes = await window.electronAPI.showSaveDialog({
+        title: 'Salva Excel',
+        defaultPath: `Preventivo_${prev.numero.replace(/[\/\\]/g, '-')}.xlsx`,
+        filters: [{ name: 'Excel Workbook', extensions: ['xlsx'] }]
+      });
+      if (saveRes.canceled) return;
+      pathDest = saveRes.filePath;
+    } catch (e) {
+      // Ignora, usa default
+    }
+    
+    const res = await window.electronAPI.generateExcel({
+      preventivo: prev,
+      impostazioni: impostazioni,
+      destinazione: pathDest
+    });
+    
+    if (res.success) {
+      toast('Excel generato con successo!', 'success');
+      window.electronAPI.openFile(res.filePath);
+    } else {
+      toast('Errore: ' + res.error, 'error');
+    }
+  },
+
+  openDocModal(prevId) {
+    Modal.show('Generazione Documentazione', `
+      <p style="color:var(--text-secondary);margin-bottom:20px">
+        Seleziona il formato da generare o apri le cartelle di destinazione.
+      </p>
+      <div class="export-mode-selector" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:10px">
+        <div class="export-mode-card" id="m-btn-gen-pdf" style="cursor:pointer">
+          <div class="export-mode-icon">📄</div>
+          <div class="export-mode-title">Genera PDF</div>
+          <div class="export-mode-desc">Crea un file PDF dettagliato o aggregato</div>
+        </div>
+        <div class="export-mode-card" id="m-btn-gen-excel" style="cursor:pointer">
+          <div class="export-mode-icon">📊</div>
+          <div class="export-mode-title">Genera Excel</div>
+          <div class="export-mode-desc">Esporta i dati in un foglio di calcolo Excel</div>
+        </div>
+        <div class="export-mode-card" id="m-btn-dir-pdf" style="cursor:pointer;background:var(--bg-surface)">
+          <div class="export-mode-icon" style="color:var(--text-muted)">📁</div>
+          <div class="export-mode-title">Archivio PDF</div>
+          <div class="export-mode-desc">Apri la cartella di sistema dei PDF</div>
+        </div>
+        <div class="export-mode-card" id="m-btn-dir-excel" style="cursor:pointer;background:var(--bg-surface)">
+          <div class="export-mode-icon" style="color:var(--text-muted)">📂</div>
+          <div class="export-mode-title">Archivio Excel</div>
+          <div class="export-mode-desc">Apri la cartella di sistema degli Excel</div>
+        </div>
+      </div>
+    `, `<button class="btn btn-ghost" onclick="Modal.close()">Chiudi</button>`);
+
+    document.getElementById('m-btn-gen-pdf')?.addEventListener('click', () => {
+      Modal.close();
+      this.exportPdf(prevId);
+    });
+    document.getElementById('m-btn-gen-excel')?.addEventListener('click', () => {
+      Modal.close();
+      this.exportExcel(prevId);
+    });
+    document.getElementById('m-btn-dir-pdf')?.addEventListener('click', () => {
+      window.electronAPI.openDir('pdf');
+    });
+    document.getElementById('m-btn-dir-excel')?.addEventListener('click', () => {
+      window.electronAPI.openDir('excel');
+    });
+  },
+
+  async sendEmailModal(prevId) {
+    const prev = await window.electronAPI.getPreventivoById(prevId || this.data?.id);
+    if (!prev) return;
+    const impostazioni = await window.electronAPI.getImpostazioni();
+    if (!impostazioni.smtp_host || !impostazioni.smtp_user) {
+      toast('Configura prima il server SMTP nelle Impostazioni', 'warning');
+      return;
+    }
+
+    const collabs = prev.assegnazioni || [];
+    let collabOptions = collabs.map(c => `<option value="${c.collaboratore_email}">${c.collaboratore_nome} (${c.collaboratore_email || 'Nessuna email'})</option>`).join('');
+    if (collabs.length === 0) collabOptions = `<option value="">Nessun collaboratore assegnato</option>`;
+
+    Modal.show('Invia Preventivo via Email', `
+      <div class="form-group" style="margin-bottom:16px;background:var(--bg-surface);padding:12px;border-radius:8px;border:1px solid var(--border)">
+        <label class="form-label" style="margin-bottom:8px">Tipo Destinatario:</label>
+        <div style="display:flex;gap:24px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600">
+            <input type="radio" name="email-target" value="cliente" checked> Cliente
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600">
+            <input type="radio" name="email-target" value="collaboratore"> Collaboratore
+          </label>
+        </div>
+      </div>
+      
+      <div class="form-group" id="wrap-email-cliente">
+        <label class="form-label">A (Cliente):</label>
+        <input type="email" class="form-input" id="m-email-to" value="${prev.cliente_email||''}" placeholder="cliente@email.it">
+      </div>
+
+      <div class="form-group" id="wrap-email-collab" style="display:none">
+        <label class="form-label">A (Collaboratore):</label>
+        <select class="form-select" id="m-email-collab">
+          ${collabOptions}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Oggetto:</label>
+        <input type="text" class="form-input" id="m-email-sub" value="Preventivo ${prev.codice} - ${prev.titolo}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Messaggio:</label>
+        <textarea class="form-textarea" id="m-email-body" style="min-height:120px">Gentile ${prev.cliente_nome},
+
+In allegato inviamo il preventivo in oggetto.
+Restiamo a disposizione per qualsiasi chiarimento.
+
+Cordiali saluti,
+${impostazioni.azienda_nome}</textarea>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:8px">
+        📎 Il PDF del preventivo (formato aggregato) verrà allegato automaticamente.
+      </div>
+    `, `
+      <button class="btn btn-ghost" onclick="Modal.close()">Annulla</button>
+      <button class="btn btn-primary" id="m-confirm-email">✉️ Invia Ora</button>
+    `);
+
+    const radios = document.querySelectorAll('input[name="email-target"]');
+    const wrapCliente = document.getElementById('wrap-email-cliente');
+    const wrapCollab = document.getElementById('wrap-email-collab');
+    const txtBody = document.getElementById('m-email-body');
+
+    radios.forEach(r => r.addEventListener('change', (e) => {
+      if (e.target.value === 'cliente') {
+        wrapCliente.style.display = 'block';
+        wrapCollab.style.display = 'none';
+        txtBody.value = `Gentile ${prev.cliente_nome},\n\nIn allegato inviamo il preventivo in oggetto.\nRestiamo a disposizione per qualsiasi chiarimento.\n\nCordiali saluti,\n${impostazioni.azienda_nome}`;
+      } else {
+        wrapCliente.style.display = 'none';
+        wrapCollab.style.display = 'block';
+        const collabName = document.getElementById('m-email-collab')?.options[document.getElementById('m-email-collab').selectedIndex]?.text.split(' (')[0] || 'Collaboratore';
+        txtBody.value = `Ciao ${collabName},\n\nIn allegato ti invio il preventivo ${prev.codice}.\nFammi sapere se è tutto chiaro.\n\nBuon lavoro,\n${impostazioni.azienda_nome}`;
+      }
+    }));
+
+    document.getElementById('m-email-collab')?.addEventListener('change', (e) => {
+      const collabName = e.target.options[e.target.selectedIndex].text.split(' (')[0];
+      txtBody.value = `Ciao ${collabName},\n\nIn allegato ti invio il preventivo ${prev.codice}.\nFammi sapere se è tutto chiaro.\n\nBuon lavoro,\n${impostazioni.azienda_nome}`;
+    });
+
+    document.getElementById('m-confirm-email')?.addEventListener('click', async () => {
+      const btn = document.getElementById('m-confirm-email');
+      const isCollab = document.querySelector('input[name="email-target"]:checked').value === 'collaboratore';
+      const toEmail = isCollab ? document.getElementById('m-email-collab').value : document.getElementById('m-email-to').value;
+      
+      if (!toEmail) {
+        toast('Inserisci un indirizzo email valido', 'error');
+        return;
+      }
+
+      btn.textContent = 'Invio in corso...';
+      btn.disabled = true;
+      try {
+        const res = await window.electronAPI.invoke('email:send', {
+          preventivo: prev,
+          voci: prev.voci || [],
+          assegnazioni: prev.assegnazioni || [],
+          impostazioni: impostazioni,
+          modalita: 'aggregata', // Invia sempre aggregata
+          to: toEmail,
+          subject: document.getElementById('m-email-sub').value,
+          text: document.getElementById('m-email-body').value
+        });
+        
+        if (res && res.success) {
+          toast('Email inviata con successo!', 'success');
+          if (prev.stato === 'bozza') {
+            await window.electronAPI.updatePreventivo(prev.id, { stato: 'inviato' });
+            this.render(document.getElementById('page-preventivo-detail'), { id: prev.id, mode: 'view' });
+          }
+          Modal.close();
+        } else {
+          toast('Errore invio: ' + (res?.error || 'Sconosciuto'), 'error');
+          btn.textContent = '✉️ Riprova';
+          btn.disabled = false;
+        }
+      } catch (e) {
+        toast('Errore eccezione: ' + e.message, 'error');
+        btn.textContent = '✉️ Riprova';
+        btn.disabled = false;
+      }
+    });
+  }
+};
+
