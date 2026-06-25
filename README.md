@@ -30,6 +30,8 @@ Il software è distribuito tramite un comodo **Installer Automatico** per Window
 | **PDF** | Generazione A4 legale IT, modalità dettagliata o aggregata |
 | **Impostazioni** | Dati aziendali, IBAN, PEC, REA, condizioni default |
 | **Backup** | Doppio storage: SQLite + JSON criptato AES-256 |
+| **Sincronizzazione** | Sincronizzazione automatica in Cloud dei dati aziendali |
+| **AI Assistant** | Integrazione Intelligenza Artificiale (Ollama) per automazione task e analisi avanzata |
 | **Auto-Update** | Aggiornamenti automatici via GitHub Releases |
 
 ---
@@ -41,6 +43,7 @@ Il software è distribuito tramite un comodo **Installer Automatico** per Window
 - **PDFKit** — Generazione PDF nativa Node.js
 - **electron-updater** — Aggiornamenti automatici via GitHub
 - **AES-256-CBC** — Crittografia backup JSON
+- **Ollama AI** — Motore per modelli linguistici locali/cloud
 
 ---
 
@@ -77,4 +80,4 @@ npm run build:publish
 
 ## 📄 Licenza
 
-Software proprietario — NunzioTech © 2024. Tutti i diritti riservati.
+Software proprietario — NunzioTech © 2026. Tutti i diritti riservati.
