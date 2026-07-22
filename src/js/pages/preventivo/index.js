@@ -89,6 +89,12 @@ export default {
   sendEmailModal(prevId) {
     return ActionModals.sendEmailModal.call(this, prevId);
   },
+  exportSupplierOrder(prevId) {
+    return ActionModals.exportSupplierOrder.call(this, prevId);
+  },
+  exportSupplierOrderTxt(prevId) {
+    return ActionModals.exportSupplierOrderTxt.call(this, prevId);
+  },
   exportXml(prevId) {
     return XmlShare.exportXml.call(this, prevId);
   }
