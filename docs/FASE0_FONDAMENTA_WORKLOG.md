@@ -14,10 +14,9 @@ La rete di sicurezza viene PRIMA della rifattorizzazione dello schema: non si to
 - [x] A.3 Test su `vat-cf-validator` (P.IVA e CF, checksum validi/errati, formati) — 9 test.
 - Risultato: **17 test, tutti verdi** su Node 24.
 
-### Batch B — Lint/Format + CI — STATO: DA FARE
-- [ ] B.1 Config ESLint (regola no-inline-comments coerente con la convenzione) + Prettier.
-- [ ] B.2 Script `npm run lint`.
-- [ ] B.3 Workflow GitHub Actions: install → lint → test (→ build su tag).
+### Batch B — CI + (lint differito) — STATO: ✅ FATTO (commit)
+- [x] B.3 Workflow GitHub Actions `.github/workflows/ci.yml`: `npm ci --ignore-scripts` + `npm test` su push/PR verso main (Node 22).
+- [~] B.1/B.2 ESLint/Prettier + enforcement "no comments" DIFFERITI: su codebase legacy pieno di commenti darebbero CI rossa. Attivare dopo la pulizia commenti (vedi Batch C / follow-up). Scelta deliberata: CI verde e significativa ora, gate lint dopo cleanup.
 
 ### Batch C — Schema unico + migrazioni (rischio alto, per ultimo) — STATO: DA FARE
 - [ ] C.1 Investigare con precisione duplicazione `core/schema.js` vs `db/core.js` (quali CREATE TABLE sono realmente eseguiti).
@@ -31,4 +30,5 @@ La rete di sicurezza viene PRIMA della rifattorizzazione dello schema: non si to
 - **Osservazione da verificare (non un bug confermato):** in `tax-calculator`, la cassa previdenziale e sommata al totale ma NON entra nella base imponibile IVA. Da valutare con il commercialista se conforme; i test attuali fotografano il comportamento corrente.
 
 ## Log di avanzamento
+- 2026-07-22 — **Batch B completato**: workflow CI GitHub Actions (npm test su push/PR, Node 22). Lint differito a dopo cleanup commenti. Prossimo: Batch C (schema unico + migrazioni).
 - 2026-07-22 — **Batch A completato**: harness `node --test` + 17 test verdi (tax-calculator, vat-cf-validator). Prossimo: Batch B (lint + CI).
