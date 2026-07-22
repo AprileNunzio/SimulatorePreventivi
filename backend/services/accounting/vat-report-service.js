@@ -1,5 +1,5 @@
 const core = require('../../db/core');
-const { buildRegistroFromFatture, calcolaLiquidazione } = require('./vat-registers');
+const { buildRegistroIva, buildRegistroFromFatture, calcolaLiquidazione } = require('./vat-registers');
 
 function caricaVociByFattura(fatture) {
   const map = {};
