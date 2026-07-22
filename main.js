@@ -122,11 +122,9 @@ let mainWindow;
 function setupUpdaterIpc() {
   ipcMain.handle('update:check-manual', async () => {
     try {
-      if (!app.isPackaged) {
-        return { success: false, message: 'Auto-update disponibile solo nella versione installata.' };
-      }
+      const currentVersion = app.getVersion();
+      const https = require('https');
 
-            const currentVersion = app.getVersion();
       const options = {
         hostname: 'api.github.com',
         path: '/repos/AprileNunzio/SimulatorePreventivi/releases/latest',
@@ -135,25 +133,26 @@ function setupUpdaterIpc() {
       };
 
       return new Promise((resolve) => {
-        require('https').get(options, (res) => {
+        https.get(options, (res) => {
           let data = '';
           res.on('data', chunk => data += chunk);
           res.on('end', () => {
             try {
               const release = JSON.parse(data);
               const latestVersion = release.tag_name ? release.tag_name.replace('v', '') : '';
+              const changelog = release.body || '';
 
-                            if (latestVersion && latestVersion !== currentVersion) {
-                resolve({ success: true, hasUpdate: true, version: latestVersion });
+              if (latestVersion && latestVersion !== currentVersion) {
+                resolve({ success: true, hasUpdate: true, version: latestVersion, body: changelog });
               } else {
-                resolve({ success: true, hasUpdate: false });
+                resolve({ success: true, hasUpdate: false, version: currentVersion });
               }
             } catch (err) {
-              resolve({ success: false, error: 'Errore nel parsing della release' });
+              resolve({ success: false, error: 'Errore durante la lettura delle informazioni di release' });
             }
           });
         }).on('error', (err) => {
-          resolve({ success: false, error: err.message });
+          resolve({ success: false, error: 'Errore di connessione a GitHub: ' + err.message });
         });
       });
     } catch (e) {
@@ -161,55 +160,103 @@ function setupUpdaterIpc() {
     }
   });
 
-  ipcMain.handle('update:download', async (e, version) => {
+  ipcMain.handle('update:download', async (e, targetVersion) => {
     try {
       const https = require('https');
+      const http = require('http');
       const fs = require('fs');
       const path = require('path');
       const { shell } = require('electron');
 
-      const fileName = `Simulatore-Preventivi-Setup-${version}.exe`;
-      const downloadPath = path.join(app.getPath('downloads'), fileName);
-      const url = `https://github.com/AprileNunzio/SimulatorePreventivi/releases/download/v${version}/${fileName}`;
+      const options = {
+        hostname: 'api.github.com',
+        path: `/repos/AprileNunzio/SimulatorePreventivi/releases/latest`,
+        method: 'GET',
+        headers: { 'User-Agent': 'SimulatorePreventivi-Updater' }
+      };
+
+      const releaseInfo = await new Promise((resolve) => {
+        https.get(options, (res) => {
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => {
+            try { resolve(JSON.parse(data)); } catch { resolve(null); }
+          });
+        }).on('error', () => resolve(null));
+      });
+
+      if (!releaseInfo || !Array.isArray(releaseInfo.assets)) {
+        return { success: false, error: 'Impossibile trovare gli asset della release su GitHub' };
+      }
+
+      const exeAsset = releaseInfo.assets.find(a => a.name.endsWith('.exe'));
+      if (!exeAsset || !exeAsset.browser_download_url) {
+        return { success: false, error: 'Installer .exe non trovato nei file di release' };
+      }
+
+      const downloadUrl = exeAsset.browser_download_url;
+      const localFileName = exeAsset.name;
+      const downloadPath = path.join(app.getPath('downloads'), localFileName);
 
       return new Promise((resolve) => {
-        function downloadFile(fileUrl) {
-          https.get(fileUrl, (res) => {
-            if (res.statusCode === 301 || res.statusCode === 302) {
-              return downloadFile(res.headers.location);
+        function followAndStream(currentUrl, maxRedirects = 10) {
+          if (maxRedirects <= 0) {
+            resolve({ success: false, error: 'Troppi reindirizzamenti durante il download' });
+            return;
+          }
+
+          const parsed = new URL(currentUrl);
+          const lib = parsed.protocol === 'https:' ? https : http;
+
+          const req = lib.get(currentUrl, { headers: { 'User-Agent': 'SimulatorePreventivi-Updater' } }, (res) => {
+            if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 303 || res.statusCode === 307 || res.statusCode === 308) {
+              const redirectUrl = res.headers.location;
+              if (redirectUrl) {
+                followAndStream(redirectUrl, maxRedirects - 1);
+                return;
+              }
             }
 
-                        const totalBytes = parseInt(res.headers['content-length'], 10);
+            if (res.statusCode !== 200) {
+              resolve({ success: false, error: `Errore dal server HTTP ${res.statusCode}` });
+              return;
+            }
+
+            const totalBytes = parseInt(res.headers['content-length'] || '0', 10);
             let receivedBytes = 0;
 
-                        const fileStream = fs.createWriteStream(downloadPath);
+            const fileStream = fs.createWriteStream(downloadPath);
             res.pipe(fileStream);
 
             res.on('data', (chunk) => {
               receivedBytes += chunk.length;
-              if (totalBytes) {
-                const percentage = Math.round((receivedBytes / totalBytes) * 100);
-                if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
-                  try {
-                    mainWindow.webContents.send('update:progress', { percent: percentage });
-                  } catch(e) {}
-                }
+              if (totalBytes > 0 && mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+                const percent = Math.round((receivedBytes / totalBytes) * 100);
+                try {
+                  mainWindow.webContents.send('update:progress', { percent });
+                } catch(e) {}
               }
             });
 
             fileStream.on('finish', () => {
               fileStream.close(() => {
                 shell.openPath(downloadPath);
-                setTimeout(() => app.quit(), 2000);
-                resolve({ success: true });
+                setTimeout(() => app.quit(), 1500);
+                resolve({ success: true, path: downloadPath });
               });
             });
-          }).on('error', (err) => {
-            resolve({ success: false, error: err.message });
+
+            fileStream.on('error', (err) => {
+              resolve({ success: false, error: 'Errore scrittura file: ' + err.message });
+            });
+          });
+
+          req.on('error', (err) => {
+            resolve({ success: false, error: 'Errore di download: ' + err.message });
           });
         }
 
-        downloadFile(url);
+        followAndStream(downloadUrl);
       });
     } catch (e) {
       return { success: false, error: e.message };
