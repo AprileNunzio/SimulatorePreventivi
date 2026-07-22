@@ -21,6 +21,7 @@ import scadenze from './pages/scadenze.js';
 import posTouch from './pages/pos-touch.js';
 import lottiScadenze from './pages/lotti-scadenze.js';
 import dipendenti from './pages/dipendenti.js';
+import reportisticaIva from './pages/reportistica-iva.js';
 import { showLoginScreen } from './ui/login-overlay.js';
 import { showFirstRunWizard } from './ui/first-run-wizard.js';
 import { initAISidebarWidget } from '../ui/ai-sidebar-widget.js';
@@ -56,7 +57,8 @@ window.Pages = {
     sincronizzazione,
     documentazione,
     'pos-touch': posTouch,
-    'lotti-scadenze': lottiScadenze
+    'lotti-scadenze': lottiScadenze,
+    'reportistica-iva': reportisticaIva
 };
 window.PreventivoDetail = preventivoDetail;
 

@@ -30,9 +30,11 @@ Vedi [FASE0_FONDAMENTA_WORKLOG.md](FASE0_FONDAMENTA_WORKLOG.md).
 - ⛔ Notifiche SdI reali (RC/NS/MC/NE/DT/AT): dipendono dal provider reale.
 - ⛔ `DatiFattureCollegate` per TD04 (nota di credito): richiede campo di riferimento fattura (schema + UI).
 
-## Priorita 3 — Contabilita e IVA 🟡
-- ✅ **Registri IVA** (vendite) + **liquidazione** (debito/credito/saldo): logica pura testata (`vat-registers.js`) + orchestrazione DB + IPC `accounting:registroIvaVendite` / `accounting:liquidazioneIva` + preload.
-- 🟡 Manca: registro **ACQUISTI** (collegare fatture passive), UI di reportistica, export PDF/CSV per il commercialista, partita doppia/piano dei conti.
+## Priorita 3 — Contabilita e IVA ✅ (nucleo completo)
+- ✅ **Registri IVA vendite E acquisti** + **liquidazione** (debito/credito/saldo): logica pura testata (`vat-registers.js`).
+- ✅ **Fatture passive strutturate**: migrazione v2 `fatture_passive`, estrattore XML con riepilogo IVA per aliquota (testato), fix P.IVA con zeri iniziali.
+- ✅ **UI Reportistica IVA** (`pages/reportistica-iva.js`): filtro periodo, registri vendite/acquisti, liquidazione, **export CSV per il commercialista**. Voce di menu + RBAC.
+- 🟡 Manca (avanzato): partita doppia/piano dei conti, LIPE, export tracciati standard, registro corrispettivi.
 
 ## Priorita 4 — Corrispettivi / RT ⛔
 Richiede Registratore Telematico fisico (o emulatore certificato) e credenziali AdE. Da progettare come adapter `fiscal-printer/` analogo a SdI.
