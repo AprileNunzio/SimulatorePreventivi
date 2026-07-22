@@ -459,7 +459,7 @@ export default {
     el.querySelector('#btn-open-backup-dir')?.addEventListener('click', async () => {
       const paths = await window.electronAPI.getPaths();
       if (paths && paths.userData) {
-        window.electronAPI.openPath(paths.userData);
+        window.electronAPI.openFile(paths.userData);
       }
     });
 
@@ -467,7 +467,7 @@ export default {
     const usersContainer = document.getElementById('rbac-users-container');
     if (usersContainer) {
       const loadRbacUsers = async () => {
-        const users = await window.electronAPI.getAllUsers() || [];
+        const users = await window.electronAPI.getAllEmployees() || [];
         usersContainer.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <div style="font-weight:700;">Elenco Utenti & Cassieri Registrati (${users.length})</div>
@@ -516,7 +516,7 @@ export default {
           btn.addEventListener('click', async () => {
             const uId = parseInt(btn.dataset.id);
             if (confirm('Confermi l\'eliminazione dell\'utente?')) {
-              await window.electronAPI.deleteUser(uId);
+              await window.electronAPI.deleteEmployee(uId);
               toast('Utente eliminato', 'success');
               await loadRbacUsers();
             }
@@ -584,9 +584,9 @@ function openModalUtenteRbac(user = null, onSuccess) {
 
       let res;
       if (isEdit) {
-        res = await window.electronAPI.updateUser(user.id, { username, pin, nome, cognome, ruolo, attivo: 1 });
+        res = await window.electronAPI.updateEmployee(user.id, { username, pin, nome, cognome, ruolo, attivo: 1 });
       } else {
-        res = await window.electronAPI.createUser({ username, pin, nome, cognome, ruolo, attivo: 1 });
+        res = await window.electronAPI.createEmployee({ username, pin, nome, cognome, ruolo, attivo: 1 });
       }
 
       if (res && res.success) {

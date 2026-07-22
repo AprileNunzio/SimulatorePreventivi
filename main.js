@@ -154,8 +154,9 @@ function setupUpdaterIpc() {
               const release = JSON.parse(data);
               const latestVersion = release.tag_name ? release.tag_name.replace('v', '') : '';
               const changelog = release.body || '';
+              const { isNewerVersion } = require('./backend/core/semver-compare');
 
-              if (latestVersion && latestVersion !== currentVersion) {
+              if (latestVersion && isNewerVersion(latestVersion, currentVersion)) {
                 done({ success: true, hasUpdate: true, version: latestVersion, body: changelog });
               } else {
                 done({ success: true, hasUpdate: false, version: currentVersion });

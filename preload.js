@@ -95,6 +95,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getFatturaByPreventivoId: (preventivoId) => ipcRenderer.invoke('db:fatture:getByPreventivoId', preventivoId),
   exportFatturaPaXml: (id) => ipcRenderer.invoke('fatturapa:export', id),
   createFatturaFromPreventivo: (preventivoId, importoIncassato) => ipcRenderer.invoke('db:fatture:createFromPreventivo', preventivoId, importoIncassato),
+  updateFattura: (id, data) => ipcRenderer.invoke('db:fatture:update', id, data),
+  deleteFattura: (id) => ipcRenderer.invoke('db:fatture:delete', id),
 
   getTransazioniFinanze: (filters) => ipcRenderer.invoke('db:finanze:getAll', filters),
   createTransazioneFinanze: (data) => ipcRenderer.invoke('db:finanze:create', data),

@@ -742,7 +742,7 @@ function applyRbacSidebarPermissions(role) {
     { id: 'nav-ddt', module: 'ddt' },
     { id: 'nav-scadenze', module: 'scadenze' },
     { id: 'nav-finanze', module: 'finanze' },
-    { id: 'nav-reportistica-iva', module: 'reportistica-iva' },
+    { id: 'nav-reportistica', module: 'reportistica-iva' },
     { id: 'nav-clienti', module: 'clienti' },
     { id: 'nav-fornitori', module: 'fornitori' },
     { id: 'nav-magazzino', module: 'magazzino' },
