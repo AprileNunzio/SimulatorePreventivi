@@ -503,6 +503,43 @@ function initializeDatabaseSchema(db) {
   try { db.run("ALTER TABLE clienti ADD COLUMN banca TEXT DEFAULT ''"); } catch (e) {}
   try { db.run("ALTER TABLE clienti ADD COLUMN condizioni_pagamento TEXT DEFAULT ''"); } catch (e) {}
   try { db.run("ALTER TABLE clienti ADD COLUMN note TEXT DEFAULT ''"); } catch (e) {}
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS pagamenti_collaboratori (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      collaboratore_id INTEGER NOT NULL,
+      preventivo_id INTEGER,
+      data_pagamento TEXT NOT NULL,
+      importo REAL NOT NULL DEFAULT 0,
+      tipo_pagamento TEXT NOT NULL DEFAULT 'bonifico',
+      metodo_pagamento TEXT DEFAULT '',
+      note TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS storico_prezzi_magazzino (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      prodotto_id INTEGER NOT NULL,
+      prezzo_acquisto REAL NOT NULL DEFAULT 0,
+      prezzo_vendita REAL NOT NULL DEFAULT 0,
+      data_variazione TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS testi_predefiniti (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      titolo TEXT NOT NULL,
+      contenuto TEXT NOT NULL,
+      contesto TEXT DEFAULT 'generico',
+      ordine INTEGER DEFAULT 0,
+      uuid TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
 }
 
 module.exports = { initializeDatabaseSchema };
