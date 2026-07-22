@@ -40,17 +40,28 @@
 - [x] 3.3 Calcolo resto istantaneo: gia cablato su input `incasso-consegnato` (verificato).
 - [x] 3.4 Conferma vendita: pulsante del componente Modal (fuori scope POS CSS).
 
-### Batch 4 — Robustezza & accessibilita (JS) — STATO: DA FARE
-- [ ] 4.1 Convertire `<div onclick>` (operatore, reparto, card) in `<button>`.
-- [ ] 4.2 `inputmode`/`type` corretti sugli input numerici del touch.
-- [ ] 4.3 Gestione focus barcode: non forzare la tastiera software a ogni tap.
-- [ ] 4.4 Rimuovere colori cablati inline residui a favore di classi tema-safe.
+### Batch 4 — Robustezza & accessibilita (JS) — STATO: ✅ FATTO (commit)
+- [x] 4.1 `<div onclick>` (operatore, reparto, card) convertiti in `<button>`; nessun residuo.
+- [x] 4.2 `inputmode="decimal"` sugli importi, `inputmode="numeric"` sul PIN.
+- [x] 4.3 Barcode `inputmode="none"`: lo scanner scrive, la tastiera software non si apre (POS scanner-first; l'inserimento manuale su tablet senza tastiera usa griglia prodotti).
+- [x] 4.4 Rimossi colori cablati che rompevano il tema chiaro: titolo carrello, info sessione, nome prodotto in riga (ora ereditano il colore tema). Box scuri intenzionali (numpad/checkout/modali) mantenuti: leggibili in entrambi i temi.
+
+---
+
+## Possibili estensioni future (non ancora pianificate)
+- [ ] Modalita peso: dialog dedicato per prodotti a peso (kg) invece di qta=1.
+- [ ] Verifica reale end-to-end nell'app Electron (smoke test manuale nei due temi).
+- [ ] Audit WCAG completo del POS (focus visibile, ordine tab, ruoli ARIA).
+- [ ] Convertire i box scuri inline (numpad/checkout/modali) in classi tema-safe.
+- [ ] Ricerca prodotto testuale rapida oltre a categorie/barcode.
+- [ ] Collegamento a stampante/RT (rientra nella Priorita 4 del piano generale).
 
 ---
 
 ## Log di avanzamento
 _(voce piu recente in alto; ogni batch completato = commit)_
 
+- 2026-07-22 — **Batch 4 completato** (div→button, inputmode, barcode scanner-first, fix testo invisibile tema chiaro). JS OK, CSS 106/106. **Tutti i batch pianificati completati.** Restano possibili estensioni (vedi sotto).
 - 2026-07-22 — **Batch 3 completato** (tendering ESATTO + tagli 5-200, griglia touch tema-safe). JS OK, CSS 106/106. Prossimo: Batch 4 (accessibilita: div→button, inputmode, focus barcode, colori inline residui).
 - 2026-07-22 — **Batch 2 completato** (stepper +/- riga carrello, delete grande, header touch, Sospendi/Svuota). JS check OK, CSS 101/101. Prossimo: Batch 3 (tendering contanti veloce).
 - 2026-07-22 — **Batch 1 completato** (CSS touch sizing: numpad, chip, reparti, card, pagamento, barcode, scrollbar). CSS bilanciato 89/89. Prossimo: Batch 2 (stepper carrello + header touch).

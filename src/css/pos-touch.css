@@ -345,6 +345,8 @@
   font-weight: 700;
   transition: all 0.15s ease;
   touch-action: manipulation;
+  font-family: inherit;
+  width: 100%;
 }
 
 .pos-reparto-btn:hover {
@@ -404,6 +406,9 @@
   height: 112px;
   box-sizing: border-box;
   touch-action: manipulation;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
 }
 
 .pos-product-card:hover {

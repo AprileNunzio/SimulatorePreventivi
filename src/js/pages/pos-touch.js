@@ -25,7 +25,7 @@ export async function render(container) {
       <div class="pos-header-bar">
         <div style="display:flex; align-items:center; gap:16px;">
           <div class="pos-badge-live">POS TOUCH ENTERPRISE</div>
-          <div id="session-info" style="font-size:13px; color:#cbd5e1;">Caricamento sessione cassa...</div>
+          <div id="session-info" style="font-size:13px; opacity:0.85;">Caricamento sessione cassa...</div>
         </div>
         
         <div style="display:flex; align-items:center; gap:8px;">
@@ -60,7 +60,7 @@ export async function render(container) {
           
           <div class="pos-cart-header">
             <div>
-              <h3 style="font-size:15px; font-weight:800; margin:0; color:#f8fafc;">Scontrino in Corso</h3>
+              <h3 style="font-size:15px; font-weight:800; margin:0;">Scontrino in Corso</h3>
               <div style="font-size:11px; color:#64748b;" id="cart-item-count">0 articoli inseriti</div>
             </div>
             <div style="display:flex; gap:8px;">
@@ -71,7 +71,7 @@ export async function render(container) {
 
           <!-- Barcode Input Area -->
           <div class="pos-barcode-search-box">
-            <input type="text" id="pos-barcode-input" class="pos-barcode-input" placeholder="Scansiona Barcode o digita..." autocomplete="off">
+            <input type="text" id="pos-barcode-input" class="pos-barcode-input" placeholder="Scansiona Barcode o digita..." autocomplete="off" inputmode="none">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="position:absolute; left:12px; top:11px;">
               <rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><rect x="6" y="12" width="12" height="4" rx="1"/>
             </svg>
@@ -268,7 +268,7 @@ export async function render(container) {
         content: `
           <div class="pos-modal-card">
             <label class="label">Importo Totale Battuta (€)</label>
-            <input type="number" step="0.01" id="input-battuta-prezzo" class="pos-modal-input" value="5.00">
+            <input type="number" step="0.01" inputmode="decimal" id="input-battuta-prezzo" class="pos-modal-input" value="5.00">
           </div>
         `,
         confirmText: 'Aggiungi a Scontrino',
@@ -320,7 +320,7 @@ async function checkOrInitSession() {
         <div class="pos-modal-card">
           <p style="color:#94a3b8; margin:0 0 10px 0;">Nessuna sessione cassa attiva. Inserisci il fondo cassa iniziale per iniziare la giornata lavorativa.</p>
           <label class="label" style="font-weight:700;">Fondo Cassa Iniziale (€)</label>
-          <input type="number" step="0.01" id="input-fondo-cassa" class="pos-modal-input" value="100.00">
+          <input type="number" step="0.01" inputmode="decimal" id="input-fondo-cassa" class="pos-modal-input" value="100.00">
         </div>
       `,
       confirmText: 'Apri Cassa',
@@ -386,9 +386,9 @@ function renderFastReparti() {
       ];
 
   container.innerHTML = reparti.map(r => `
-    <div class="pos-reparto-btn" onclick="window.PosTouch.addBattutaReparto('${r.nome}', ${r.aliquota_iva || 22.0})" style="border-left: 3px solid ${r.colore || '#3b82f6'};">
+    <button type="button" class="pos-reparto-btn" onclick="window.PosTouch.addBattutaReparto('${r.nome}', ${r.aliquota_iva || 22.0})" style="border-left: 3px solid ${r.colore || '#3b82f6'};">
       🏷 ${r.nome.toUpperCase()} (${r.aliquota_iva || 22}%)
-    </div>
+    </button>
   `).join('');
 }
 
@@ -407,18 +407,18 @@ function renderProductGrid() {
   const isHaccpEnabled = posConfig && posConfig.gestione_lotti_haccp_enabled;
 
   container.innerHTML = list.map(p => `
-    <div class="pos-product-card" onclick="window.PosTouch.addToCart(${p.id})">
+    <button type="button" class="pos-product-card" onclick="window.PosTouch.addToCart(${p.id})">
       ${isHaccpEnabled && p.gestione_lotti ? `<div class="pos-badge-fefo">FEFO</div>` : ''}
       ${p.gestione_peso ? `<div class="pos-badge-weight">PESO</div>` : ''}
-      <div>
+      <div style="text-align:left; width:100%;">
         <div class="cat-tag">${p.categoria_nome || 'Generale'}</div>
         <div class="prod-title">${p.descrizione}</div>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; width:100%;">
         <span class="price-tag">€ ${parseFloat(p.prezzo_vendita).toFixed(2)}</span>
         <span class="unit-tag">${p.unita_misura || 'pz'}</span>
       </div>
-    </div>
+    </button>
   `).join('');
 }
 
@@ -520,8 +520,8 @@ function renderCartUI() {
     return `
       <tr class="${isSel ? 'selected' : ''}" onclick="window.PosTouch.selectCartRow(${idx})" style="cursor:pointer;">
         <td>
-          <strong style="color:${isSel ? '#60a5fa' : '#f8fafc'};">${item.descrizione}</strong>
-          ${item.sconto_percentuale > 0 ? `<div style="font-size:10px; color:#f59e0b;">Sconto -${item.sconto_percentuale}%</div>` : ''}
+          <strong>${item.descrizione}</strong>
+          ${item.sconto_percentuale > 0 ? `<div style="font-size:10px; color:#d97706;">Sconto -${item.sconto_percentuale}%</div>` : ''}
         </td>
         <td>
           <div class="pos-qty-stepper">
@@ -617,7 +617,7 @@ async function openModalCambioOperatore() {
       </div>
       <div>
         <label class="label">Inserisci PIN Operatore (6 cifre)</label>
-        <input type="password" maxlength="6" id="input-utente-pin" class="pos-modal-input" placeholder="******" style="font-size:24px; letter-spacing:4px; text-align:center;">
+        <input type="password" maxlength="6" inputmode="numeric" id="input-utente-pin" class="pos-modal-input" placeholder="******" style="font-size:24px; letter-spacing:4px; text-align:center;">
       </div>
     </div>
   `;
@@ -794,7 +794,7 @@ function openModalIncasso(metodoDefault = 'CONTANTI') {
 
       <div>
         <label class="label">Importo Consegnato (€)</label>
-        <input type="number" step="0.01" id="incasso-consegnato" class="pos-modal-input" style="font-size:22px; font-weight:800; text-align:center;" value="${totaleNetto.toFixed(2)}">
+        <input type="number" step="0.01" inputmode="decimal" id="incasso-consegnato" class="pos-modal-input" style="font-size:22px; font-weight:800; text-align:center;" value="${totaleNetto.toFixed(2)}">
       </div>
 
       <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;">
@@ -889,7 +889,7 @@ async function eseguiChiusuraZ() {
 
       <div>
         <label class="label">Contanti Effettivamente Contati in Cassa (€)</label>
-        <input type="number" step="0.01" id="input-contanti-effettivi" class="pos-modal-input" style="font-size:20px; font-weight:800; text-align:center;" value="${saldoContantiAtteso.toFixed(2)}">
+        <input type="number" step="0.01" inputmode="decimal" id="input-contanti-effettivi" class="pos-modal-input" style="font-size:20px; font-weight:800; text-align:center;" value="${saldoContantiAtteso.toFixed(2)}">
       </div>
 
       <div id="discrepanza-box" style="background:#0f172a; padding:12px; border-radius:8px; text-align:center; font-weight:800; border:1px solid #334155;">
