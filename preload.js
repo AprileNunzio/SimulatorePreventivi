@@ -79,6 +79,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   generatePdf: (data) => ipcRenderer.invoke('pdf:generate', data),
   generateSupplierOrder: (preventivoId, opzioni) => ipcRenderer.invoke('procurement:generateSupplierOrder', preventivoId, opzioni),
+  generateSupplierOrderTxt: (preventivoId, opzioni) => ipcRenderer.invoke('procurement:generateSupplierOrderTxt', preventivoId, opzioni),
   generateExcel: (data) => ipcRenderer.invoke('excel:generate', data),
 
   exportBackup: () => ipcRenderer.invoke('backup:export'),

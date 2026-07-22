@@ -27,10 +27,15 @@ export default {
           <div class="export-mode-title">Archivio Excel</div>
           <div class="export-mode-desc">Apri la cartella di sistema degli Excel</div>
         </div>
-        <div class="export-mode-card" id="m-btn-gen-fornitori" style="cursor:pointer;grid-column:1/-1">
+        <div class="export-mode-card" id="m-btn-gen-fornitori" style="cursor:pointer">
           <div class="export-mode-icon">🏭</div>
-          <div class="export-mode-title">Esporta per Fornitore</div>
-          <div class="export-mode-desc">Genera un ordine di acquisto diviso per fornitore, con modello e quantità da ordinare per ciascuno</div>
+          <div class="export-mode-title">Esporta per Fornitore (PDF)</div>
+          <div class="export-mode-desc">Ordine di acquisto diviso per fornitore, dettagliato con prezzi e totali</div>
+        </div>
+        <div class="export-mode-card" id="m-btn-gen-fornitori-txt" style="cursor:pointer">
+          <div class="export-mode-icon">📝</div>
+          <div class="export-mode-title">Esporta per Fornitore (TXT)</div>
+          <div class="export-mode-desc">Elenco semplice: quantità, modello e nome prodotto, pronto da copiare o inviare</div>
         </div>
       </div>
     `, `<button class="btn btn-ghost" onclick="Modal.close()">Chiudi</button>`);
@@ -53,6 +58,10 @@ export default {
       Modal.close();
       this.exportSupplierOrder(prevId);
     });
+    document.getElementById('m-btn-gen-fornitori-txt')?.addEventListener('click', () => {
+      Modal.close();
+      this.exportSupplierOrderTxt(prevId);
+    });
   },
   async exportSupplierOrder(prevId) {
     const id = prevId || this.data?.id;
@@ -60,6 +69,17 @@ export default {
     const res = await window.electronAPI.generateSupplierOrder(id);
     if (res.success) {
       toast('Ordine per fornitore generato con successo!', 'success');
+      window.electronAPI.showItemInFolder(res.filePath);
+    } else {
+      toast('Errore: ' + res.error, 'error');
+    }
+  },
+  async exportSupplierOrderTxt(prevId) {
+    const id = prevId || this.data?.id;
+    toast('Generazione elenco TXT in corso...', 'info', 5000);
+    const res = await window.electronAPI.generateSupplierOrderTxt(id);
+    if (res.success) {
+      toast('Elenco TXT generato con successo!', 'success');
       window.electronAPI.showItemInFolder(res.filePath);
     } else {
       toast('Errore: ' + res.error, 'error');

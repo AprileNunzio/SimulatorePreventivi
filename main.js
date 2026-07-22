@@ -541,10 +541,11 @@ app.whenReady().then(async () => {
   global.EXPORTS_PDF_PATH = path.join(global.EXPORTS_PATH, 'pdf');
   global.EXPORTS_EXCEL_PATH = path.join(global.EXPORTS_PATH, 'excel');
   global.EXPORTS_XML_PATH = path.join(global.EXPORTS_PATH, 'xml');
+  global.EXPORTS_TXT_PATH = path.join(global.EXPORTS_PATH, 'txt');
   global.IMAGES_PATH = path.join(global.DATA_PATH, 'images');
   global.MAGAZZINO_IMAGES_PATH = path.join(global.IMAGES_PATH, 'magazzino');
 
-  [global.DATA_PATH, global.BACKUP_PATH, global.EXPORTS_PATH, global.EXPORTS_PDF_PATH, global.EXPORTS_EXCEL_PATH, global.EXPORTS_XML_PATH, global.IMAGES_PATH, global.MAGAZZINO_IMAGES_PATH].forEach(dir => {
+  [global.DATA_PATH, global.BACKUP_PATH, global.EXPORTS_PATH, global.EXPORTS_PDF_PATH, global.EXPORTS_EXCEL_PATH, global.EXPORTS_XML_PATH, global.EXPORTS_TXT_PATH, global.IMAGES_PATH, global.MAGAZZINO_IMAGES_PATH].forEach(dir => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   });
 
@@ -583,6 +584,7 @@ ipcMain.handle('open-dir', async (event, type) => {
   if (type === 'pdf') dirPath = global.EXPORTS_PDF_PATH;
   if (type === 'excel') dirPath = global.EXPORTS_EXCEL_PATH;
   if (type === 'xml') dirPath = global.EXPORTS_XML_PATH;
+  if (type === 'txt') dirPath = global.EXPORTS_TXT_PATH;
 
     await shell.openPath(dirPath);
   return { success: true };
@@ -599,4 +601,5 @@ ipcMain.handle('get-paths', async () => ({
   exportsPdf: global.EXPORTS_PDF_PATH,
   exportsExcel: global.EXPORTS_EXCEL_PATH,
   exportsXml: global.EXPORTS_XML_PATH,
+  exportsTxt: global.EXPORTS_TXT_PATH,
 }));

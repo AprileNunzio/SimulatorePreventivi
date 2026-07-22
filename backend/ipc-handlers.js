@@ -834,6 +834,13 @@ function setupIpcHandlers(ipcMain) {
       return { success: false, error: err.message };
     }
   });
+  ipcMain.handle('procurement:generateSupplierOrderTxt', async (e, preventivoId, opzioni) => {
+    try {
+      return await supplierOrderService.generateSupplierOrderTxtForPreventivo(preventivoId, opzioni);
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
 
   ipcMain.handle('email:send', async (e, data) => {
     try {
