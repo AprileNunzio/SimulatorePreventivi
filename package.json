@@ -14,8 +14,9 @@
     "dev": "electron . --dev",
     "test": "node --test \"tests/**/*.test.js\"",
     "build": "electron-builder --win",
-    "build:publish": "npm version patch && electron-builder --win --publish always",
-    "build:publish-draft": "npm version patch && electron-builder --win --publish never"
+    "build:local": "electron-builder --win",
+    "build:publish": "node scripts/version-bump-safe.js && electron-builder --win --publish always && git push origin main --tags",
+    "build:publish-draft": "node scripts/version-bump-safe.js && electron-builder --win --publish never"
   },
   "dependencies": {
     "basic-ftp": "^6.0.1",
