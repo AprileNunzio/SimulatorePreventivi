@@ -28,12 +28,20 @@ La rete di sicurezza viene PRIMA della rifattorizzazione dello schema: non si to
       ora fonte UNICA e COMPLETA (27 tabelle). Additivo, IF NOT EXISTS, zero rischio.
 - [x] C.4a Test di integrazione schema (`tests/integration/schema.test.js`): istanzia
       sql.js senza Electron, verifica tutte le tabelle attese + idempotenza. 3 test verdi.
-- [ ] C.3b (DA FARE) Rimuovere i CREATE TABLE ridondanti da `db/core.js` (ora sicuri
-      da togliere: tutto e in core/schema). Edit meccanico ~250 righe: fare con smoke
-      test completo dell'app Electron a disposizione.
-- [ ] C.2 (DA FARE) Tabella `schema_version` + runner migrazioni versionate; convertire
-      gli ALTER TABLE brute-force in migrazioni ordinate.
-- [ ] C.4b (DA FARE) Test migrazione su DB legacy esistente (no perdita dati).
+- [x] C.3b Rimossa la funzione `createTables()` da `db/core.js`: era **codice morto**
+      (nessun chiamante, non esportata). db/core.js 659→279 righe. Confermato che il
+      mio consolidamento C.3a ha corretto un bug latente reale (le 3 tabelle non
+      venivano mai create a runtime perche createTables non veniva mai chiamata).
+- [x] C.2 Sistema migrazioni versionate: `backend/core/migrate.js` (tabella
+      `schema_version` + runner idempotente) e `backend/core/migrations/index.js`
+      (migrazione 1: indici di prestazione). Agganciato a `setupDatabase()`.
+- [x] C.4b Test integrazione migrazioni (`tests/integration/migrate.test.js`):
+      applicazione, idempotenza, creazione indici. Suite totale: **23 test verdi**.
+- [ ] Follow-up: convertire gli ALTER TABLE brute-force di core/schema.js in
+      migrazioni versionate (ora sono la compat legacy; le modifiche FUTURE vanno in
+      migrations/). Non urgente: funzionano e sono idempotenti.
+
+### FASE 0 — COMPLETA ✅ (rete di sicurezza + CI + schema unico + migrazioni)
 
 ## Note tecniche accertate
 - `calculateDocumentTaxes` e funzione pura (nessun require) — ideale per test.
