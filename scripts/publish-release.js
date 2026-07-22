@@ -50,15 +50,17 @@ async function publish() {
 
   let releaseId;
   let uploadUrl;
+  let existingAssets = [];
 
   if (relRes.statusCode === 200 && relRes.body.id) {
     releaseId = relRes.body.id;
     uploadUrl = relRes.body.upload_url;
+    existingAssets = relRes.body.assets || [];
     console.log('Release trovata. ID:', releaseId);
 
     const updateBody = JSON.stringify({
       name: `Simulatore Preventivi Enterprise v${version} — NunzioTech`,
-      body: `## 🚀 Release v${version} — NunzioTech Enterprise ERP Architecture\n\n### 📦 File di Installazione Incluso\n- **Installer Automatico per Windows**: \`Simulatore.Preventivi.Setup.${version}.exe\`\n\n### ✨ Novità della Versione v${version}\n- **Completamento 100% dei 4 Pilastri Operativi**\n- **Interfacce UI completate**: Gestione DDT e Scadenzario Incassi con rateizzazioni\n- **Cloud SDI Connector**: Trasmissione FatturePA v1.2.2 e gestione Fatture Passive d'Acquisto\n- **Reintegro Magazzino**: Ordini d'acquisto automatici per scorta minima e valorizzazione PMP\n- **Multi-Utente RBAC & Riconciliazione Bancaria**: Controllo accessi basato sui ruoli ed abbinamento estratti conto CSV/CBI\n\nDeveloped with excellence by **NunzioTech (Nunzio Aprile)**.`
+      body: `## 🚀 Release v${version} — NunzioTech Enterprise ERP Architecture\n\n### 📦 File di Installazione Incluso\n- **Installer Automatico per Windows**: \`Simulatore.Preventivi.Setup.${version}.exe\`\n\n### ✨ Novità della Versione v${version}\n- **Motore Auto-Updater Potenziato**: Risoluzione dinamica degli asset ed eliminazione degli errori di download\n- **Completamento 100% dei 4 Pilastri Operativi**\n- **Interfacce UI completate**: Gestione DDT e Scadenzario Incassi con rateizzazioni\n- **Cloud SDI Connector**: Trasmissione FatturePA v1.2.2 e gestione Fatture Passive d'Acquisto\n- **Reintegro Magazzino**: Ordini d'acquisto automatici per scorta minima e valorizzazione PMP\n- **Multi-Utente RBAC & Riconciliazione Bancaria**: Controllo accessi basato sui ruoli ed abbinamento estratti conto CSV/CBI\n\nDeveloped with excellence by **NunzioTech (Nunzio Aprile)**.`
     });
 
     await request({
@@ -78,7 +80,7 @@ async function publish() {
       tag_name: tag,
       target_commitish: 'main',
       name: `Simulatore Preventivi Enterprise v${version} — NunzioTech`,
-      body: `## 🚀 Release v${version} — NunzioTech Enterprise ERP Architecture\n\n### 📦 File di Installazione Incluso\n- **Installer Automatico per Windows**: \`Simulatore.Preventivi.Setup.${version}.exe\`\n\n### ✨ Novità della Versione v${version}\n- **Completamento 100% dei 4 Pilastri Operativi**\n- **Interfacce UI completate**: Gestione DDT e Scadenzario Incassi con rateizzazioni\n- **Cloud SDI Connector**: Trasmissione FatturePA v1.2.2 e gestione Fatture Passive d'Acquisto\n- **Reintegro Magazzino**: Ordini d'acquisto automatici per scorta minima e valorizzazione PMP\n- **Multi-Utente RBAC & Riconciliazione Bancaria**: Controllo accessi basato sui ruoli ed abbinamento estratti conto CSV/CBI\n\nDeveloped with excellence by **NunzioTech (Nunzio Aprile)**.`,
+      body: `## 🚀 Release v${version} — NunzioTech Enterprise ERP Architecture\n\n### 📦 File di Installazione Incluso\n- **Installer Automatico per Windows**: \`Simulatore.Preventivi.Setup.${version}.exe\`\n\n### ✨ Novità della Versione v${version}\n- **Motore Auto-Updater Potenziato**: Risoluzione dinamica degli asset ed eliminazione degli errori di download\n- **Completamento 100% dei 4 Pilastri Operativi**\n- **Interfacce UI completate**: Gestione DDT e Scadenzario Incassi con rateizzazioni\n- **Cloud SDI Connector**: Trasmissione FatturePA v1.2.2 e gestione Fatture Passive d'Acquisto\n- **Reintegro Magazzino**: Ordini d'acquisto automatici per scorta minima e valorizzazione PMP\n- **Multi-Utente RBAC & Riconciliazione Bancaria**: Controllo accessi basato sui ruoli ed abbinamento estratti conto CSV/CBI\n\nDeveloped with excellence by **NunzioTech (Nunzio Aprile)**.`,
       draft: false,
       prerelease: false
     });
@@ -114,6 +116,20 @@ async function publish() {
     if (!fs.existsSync(item.file)) {
       console.warn('File non trovato in dist:', item.file);
       continue;
+    }
+
+    const oldAsset = existingAssets.find(a => a.name === item.name);
+    if (oldAsset) {
+      console.log(`Rimozione vecchio asset preesistente ${item.name} (ID: ${oldAsset.id})...`);
+      await request({
+        hostname: 'api.github.com',
+        path: `/repos/${owner}/${repo}/releases/assets/${oldAsset.id}`,
+        method: 'DELETE',
+        headers: {
+          'User-Agent': 'NunzioTech-Release-Uploader',
+          'Authorization': `token ${token}`
+        }
+      });
     }
 
     console.log(`Caricamento asset ${item.name} (${fs.statSync(item.file).size} byte)...`);
