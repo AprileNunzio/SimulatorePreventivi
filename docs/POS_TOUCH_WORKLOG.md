@@ -34,11 +34,11 @@
 - [x] 2.5 Sospendi/Svuota: classe `.pos-cart-mini-btn` (min-height 44px).
 - Nota: `decQty` sotto zero rimuove la riga; `changeQty` ricalcola totale_riga.
 
-### Batch 3 — Checkout piu semplice e veloce (JS) — STATO: DA FARE
-- [ ] 3.1 Tendering contanti: tagli completi (5/10/20/50/100/200) + "ESATTO".
-- [ ] 3.2 Pulsanti taglio grandi e a griglia touch.
-- [ ] 3.3 Calcolo resto istantaneo gia legato (verificare) e ben visibile.
-- [ ] 3.4 Conferma vendita con un tap ben evidente.
+### Batch 3 — Checkout piu semplice e veloce (JS) — STATO: ✅ FATTO (commit)
+- [x] 3.1 Tendering: ESATTO + tagli 5/10/20/50/100/200 via `window.PosTouch.setTender`.
+- [x] 3.2 Pulsanti taglio `.pos-denom-btn` (min-height 54px) a griglia 4 col, tema-safe.
+- [x] 3.3 Calcolo resto istantaneo: gia cablato su input `incasso-consegnato` (verificato).
+- [x] 3.4 Conferma vendita: pulsante del componente Modal (fuori scope POS CSS).
 
 ### Batch 4 — Robustezza & accessibilita (JS) — STATO: DA FARE
 - [ ] 4.1 Convertire `<div onclick>` (operatore, reparto, card) in `<button>`.
@@ -51,6 +51,7 @@
 ## Log di avanzamento
 _(voce piu recente in alto; ogni batch completato = commit)_
 
+- 2026-07-22 — **Batch 3 completato** (tendering ESATTO + tagli 5-200, griglia touch tema-safe). JS OK, CSS 106/106. Prossimo: Batch 4 (accessibilita: div→button, inputmode, focus barcode, colori inline residui).
 - 2026-07-22 — **Batch 2 completato** (stepper +/- riga carrello, delete grande, header touch, Sospendi/Svuota). JS check OK, CSS 101/101. Prossimo: Batch 3 (tendering contanti veloce).
 - 2026-07-22 — **Batch 1 completato** (CSS touch sizing: numpad, chip, reparti, card, pagamento, barcode, scrollbar). CSS bilanciato 89/89. Prossimo: Batch 2 (stepper carrello + header touch).
 - 2026-07-22 — Creato worklog e piano. Diagnosi completata su `pos-touch.js` (924 righe). Prossimo: Batch 1.

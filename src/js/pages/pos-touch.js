@@ -217,6 +217,12 @@ export async function render(container) {
     },
     incQty: (idx) => changeQty(idx, 1),
     decQty: (idx) => changeQty(idx, -1),
+    setTender: (v) => {
+      const el = document.getElementById('incasso-consegnato');
+      if (!el) return;
+      el.value = parseFloat(v).toFixed(2);
+      el.dispatchEvent(new Event('input'));
+    },
     cambiaCassiere: openModalCambioOperatore,
     pressNum: (n) => {
       if (n === '.' && numpadBuffer.includes('.')) return;
@@ -791,11 +797,14 @@ function openModalIncasso(metodoDefault = 'CONTANTI') {
         <input type="number" step="0.01" id="incasso-consegnato" class="pos-modal-input" style="font-size:22px; font-weight:800; text-align:center;" value="${totaleNetto.toFixed(2)}">
       </div>
 
-      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px;">
-        <button class="btn btn-secondary" onclick="document.getElementById('incasso-consegnato').value='5.00'; document.getElementById('incasso-consegnato').dispatchEvent(new Event('input'))">€ 5</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('incasso-consegnato').value='10.00'; document.getElementById('incasso-consegnato').dispatchEvent(new Event('input'))">€ 10</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('incasso-consegnato').value='20.00'; document.getElementById('incasso-consegnato').dispatchEvent(new Event('input'))">€ 20</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('incasso-consegnato').value='50.00'; document.getElementById('incasso-consegnato').dispatchEvent(new Event('input'))">€ 50</button>
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;">
+        <button class="pos-denom-btn exact" onclick="window.PosTouch.setTender(${totaleNetto})">ESATTO</button>
+        <button class="pos-denom-btn" onclick="window.PosTouch.setTender(5)">€ 5</button>
+        <button class="pos-denom-btn" onclick="window.PosTouch.setTender(10)">€ 10</button>
+        <button class="pos-denom-btn" onclick="window.PosTouch.setTender(20)">€ 20</button>
+        <button class="pos-denom-btn" onclick="window.PosTouch.setTender(50)">€ 50</button>
+        <button class="pos-denom-btn" onclick="window.PosTouch.setTender(100)">€ 100</button>
+        <button class="pos-denom-btn" onclick="window.PosTouch.setTender(200)">€ 200</button>
       </div>
 
       <div style="background:#020617; padding:12px 16px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid #334155;">
