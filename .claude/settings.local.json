@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(npm start *)",
+      "Bash(taskkill //IM electron.exe //F)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npm run *)"
+    ]
+  }
+}

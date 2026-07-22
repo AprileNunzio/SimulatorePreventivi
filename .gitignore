@@ -1,0 +1,42 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Build output
+dist/
+
+# Electron data (user data, DB, backups)
+data/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Gemini
+.gemini/
+
+# Excel test file
+*.xlsx
+
+# Development
+*.map
+test*.js
+test*.mjs
+get_logs*.js
+refactor.js
+test_exports/
+gen-icon.js
+make_ico.py

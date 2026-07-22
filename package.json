@@ -1,0 +1,93 @@
+{
+  "name": "simulatore-preventivi",
+  "version": "3.3.0",
+  "description": "Piattaforma Enterprise ERP di Fatturazione, Magazzino e Preventivi per Windows — NunzioTech",
+  "main": "main.js",
+  "author": {
+    "name": "NunzioTech",
+    "email": "aprilenunzio88@gmail.com"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder --win",
+    "build:publish": "npm version patch && electron-builder --win --publish always",
+    "build:publish-draft": "npm version patch && electron-builder --win --publish never"
+  },
+  "dependencies": {
+    "basic-ftp": "^6.0.1",
+    "chart.js": "^4.5.1",
+    "electron-updater": "^6.3.9",
+    "exceljs": "^4.4.0",
+    "fast-xml-parser": "^5.10.1",
+    "nodemailer": "^9.0.1",
+    "pdfkit": "^0.15.0",
+    "sql.js": "^1.12.0",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "decomment": "^0.9.5",
+    "electron": "^29.4.6",
+    "electron-builder": "^24.13.3",
+    "jimp": "^1.6.1",
+    "png-to-ico": "^3.0.1"
+  },
+  "build": {
+    "appId": "com.nunziotech.simulatorepreventivi",
+    "productName": "Simulatore Preventivi",
+    "copyright": "Copyright © 2024 NunzioTech",
+    "directories": {
+      "output": "dist"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "AprileNunzio",
+        "repo": "SimulatorePreventivi",
+        "releaseType": "release"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "publisherName": "NunzioTech"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": false,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Simulatore Preventivi",
+      "menuCategory": "NunzioTech",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "include": "installer.nsh"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "backend/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/",
+        "to": "assets/"
+      }
+    ],
+    "asar": true
+  }
+}
