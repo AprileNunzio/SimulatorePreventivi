@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { buildRegistroIva, calcolaLiquidazione } = require('../../backend/services/accounting/vat-registers');
+const { buildRegistroIva, calcolaLiquidazione, mapFatturaToDocumento, buildRegistroFromFatture } = require('../../backend/services/accounting/vat-registers');
 
 const vendite = [
   { numero: 'FT1', data: '2026-01-10', controparte: 'Cliente A', righeIva: [{ aliquota: 22, imponibile: 100, imposta: 22 }] },
@@ -52,6 +52,37 @@ test('liquidazione a credito quando IVA acquisti supera IVA vendite', () => {
   assert.equal(liq.saldo, -88);
   assert.equal(liq.importo, 88);
   assert.equal(liq.esito, 'A_CREDITO');
+});
+
+test('mapFatturaToDocumento aggrega le voci per aliquota usando totale_riga', () => {
+  const doc = mapFatturaToDocumento(
+    { numero: 'FT9', data_fattura: '2026-03-01', cliente_nome: 'Tizio' },
+    [
+      { aliquota_iva: 22, totale_riga: 100 },
+      { aliquota_iva: 22, totale_riga: 100 },
+      { aliquota_iva: 10, totale_riga: 50 }
+    ]
+  );
+  assert.equal(doc.numero, 'FT9');
+  assert.equal(doc.controparte, 'Tizio');
+  const a22 = doc.righeIva.find(r => r.aliquota === 22);
+  assert.equal(a22.imponibile, 200);
+  assert.equal(a22.imposta, 44);
+});
+
+test('buildRegistroFromFatture costruisce il registro dalla forma DB', () => {
+  const fatture = [
+    { id: 1, numero: 'FT1', data_fattura: '2026-01-10', cliente_nome: 'A' },
+    { id: 2, numero: 'FT2', data_fattura: '2026-01-20', cliente_nome: 'B' }
+  ];
+  const vociByFatturaId = {
+    1: [{ aliquota_iva: 22, totale_riga: 100 }],
+    2: [{ aliquota_iva: 22, totale_riga: 200 }]
+  };
+  const reg = buildRegistroFromFatture(fatture, vociByFatturaId);
+  assert.equal(reg.righe.length, 2);
+  assert.equal(reg.totali.imponibile, 300);
+  assert.equal(reg.totali.imposta, 66);
 });
 
 test('registro vuoto ritorna totali a zero', () => {

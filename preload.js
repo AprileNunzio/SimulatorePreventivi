@@ -147,6 +147,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   sendInvoiceToSdi: (id) => ipcRenderer.invoke('sdi:sendInvoice', id),
   checkSdiNotifications: (id) => ipcRenderer.invoke('sdi:checkNotifications', id),
+  getRegistroIvaVendite: (periodo) => ipcRenderer.invoke('accounting:registroIvaVendite', periodo),
+  getLiquidazioneIva: (periodo) => ipcRenderer.invoke('accounting:liquidazioneIva', periodo),
   importPassiveXml: (xml) => ipcRenderer.invoke('passive:importXml', xml),
   checkUserPermission: (role, mod) => ipcRenderer.invoke('auth:checkPermission', role, mod),
   getAvailableRoles: () => ipcRenderer.invoke('auth:getRoles'),
