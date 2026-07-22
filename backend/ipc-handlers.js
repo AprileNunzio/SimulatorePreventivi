@@ -1194,13 +1194,70 @@ function setupIpcHandlers(ipcMain) {
   const rbacEngine = require('./services/auth/rbac-engine');
   const bankReconciliation = require('./services/finance/bank-reconciliation');
 
+  const treasuryEngine = require('./services/finance/treasury-engine');
+  ipcMain.handle('treasury:recordPayment', async (e, data) => treasuryEngine.recordPayment(data));
+  ipcMain.handle('treasury:getOverdueSchedules', async () => treasuryEngine.getOverdueSchedules());
+
   ipcMain.handle('sdi:sendInvoice', async (e, id) => sdiConnector.sendInvoiceToSdi(id));
   ipcMain.handle('sdi:checkNotifications', async (e, id) => sdiConnector.checkSdiNotifications(id));
   ipcMain.handle('passive:importXml', async (e, xmlContent) => passiveInvoices.parseAndImportPassiveXml(xmlContent));
-  ipcMain.handle('inventory:generateReorders', async () => reorderEngine.generatePurchaseReorders());
+  const posConfig = require('./services/pos/pos-config');
+  const employeeService = require('./services/employees/employee-service');
+
   ipcMain.handle('auth:checkPermission', async (e, role, mod) => rbacEngine.verifyUserPermission(role, mod));
   ipcMain.handle('auth:getRoles', async () => rbacEngine.getAvailableRoles());
-  ipcMain.handle('finance:reconcileCsv', async (e, csvText) => bankReconciliation.processBankStatementCsv(csvText));
+  ipcMain.handle('pos:getConfig', async () => posConfig.getPosConfig());
+  ipcMain.handle('pos:saveConfig', async (e, cfg) => posConfig.savePosConfig(cfg));
+
+
+  ipcMain.handle('employee:getAll', async () => employeeService.getAllDipendenti());
+  ipcMain.handle('employee:getByPin', async (e, pin) => employeeService.getDipendenteByPin(pin));
+  ipcMain.handle('employee:create', async (e, data) => employeeService.createDipendente(data));
+  ipcMain.handle('employee:update', async (e, id, data) => employeeService.updateDipendente(id, data));
+  ipcMain.handle('employee:delete', async (e, id) => employeeService.deleteDipendente(id));
+  ipcMain.handle('employee:authenticate', async (e, username, pin) => {
+    const rbacEngine = require('./services/auth/rbac-engine');
+    return rbacEngine.authenticateUtente(username, pin);
+  });
+
+  // ==== DB Repair & Diagnostics ====
+  const dbRepair = require('./db/repair');
+  ipcMain.handle('db:repair', async (e, newPin) => dbRepair.repairAdminUser(newPin));
+  ipcMain.handle('db:validate', async () => dbRepair.validateSchema());
+  ipcMain.handle('db:isFirstRun', async () => dbRepair.isFirstRun());
+  ipcMain.handle('db:completeFirstRun', async (e, adminData) => dbRepair.completeFirstRun(adminData));
+  ipcMain.handle('db:emergencyCode', async () => dbRepair.generateEmergencyCode());
+  ipcMain.handle('db:verifyEmergencyReset', async (e, code, newPin) => dbRepair.verifyEmergencyCodeAndReset(code, newPin));
+
+  // ==== SMTP Service ====
+  const smtpService = require('./services/smtp/smtp-service');
+  ipcMain.handle('smtp:test', async () => smtpService.testSmtpConnection());
+  ipcMain.handle('smtp:isConfigured', async () => smtpService.isSmtpConfigured());
+  ipcMain.handle('smtp:sendPinReset', async (e, email) => smtpService.sendPinResetEmail(email));
+  ipcMain.handle('smtp:verifyResetCode', async (e, email, code, newPin) => smtpService.verifyPinResetCode(email, code, newPin));
+
+  const mysqlSync = require('./services/cloud/mysql-sync');
+  const ftpBackup = require('./services/cloud/ftp-backup');
+
+  ipcMain.handle('mysql:testConnection', async (e, cfg) => mysqlSync.testConnection(cfg));
+  ipcMain.handle('mysql:triggerSync', async () => mysqlSync.triggerLiveSync());
+  ipcMain.handle('ftp:testConnection', async (e, cfg) => ftpBackup.testConnection(cfg));
+  ipcMain.handle('ftp:uploadEmergencyBackup', async () => ftpBackup.uploadEmergencyBackupNow());
+
+  // IPC Handlers per Lotti Alimentari & Scadenze
+  ipcMain.handle('db:lotti:getByProdotto', async (e, prodottoId) => db.getLottiByProdotto(prodottoId));
+  ipcMain.handle('db:lotti:add', async (e, data) => db.addLotto(data));
+  ipcMain.handle('db:lotti:scaricoDegradato', async (e, { lottoId, quantita, causaleHaccp, operatore }) => db.scaricaLottoDegradato(lottoId, quantita, causaleHaccp, operatore));
+  ipcMain.handle('db:lotti:scadenzeAlert', async (e, giorni) => db.getScadenzeAlert(giorni));
+  ipcMain.handle('db:lotti:tracciabilita', async (e, lottoId) => db.getRegistroTracciabilita(lottoId));
+
+  // IPC Handlers per POS Cassa Touch
+  ipcMain.handle('db:pos:getSessioneAttiva', async () => db.getSessioneAttiva());
+  ipcMain.handle('db:pos:apriCassa', async (e, { fondoCassa, note }) => db.apriSessioneCassa(fondoCassa, note));
+  ipcMain.handle('db:pos:registraScontrino', async (e, data) => db.registraScontrino(data));
+  ipcMain.handle('db:pos:chiudiCassaZ', async (e, { note }) => db.chiudiSessioneCassaZ(note));
+  ipcMain.handle('db:pos:parseBarcode', async (e, barcode) => db.parseBarcodeAlimentare(barcode));
 }
 
 module.exports = { setupIpcHandlers };
+

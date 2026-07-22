@@ -166,6 +166,7 @@ function setupUpdaterIpc() {
       const http = require('http');
       const fs = require('fs');
       const path = require('path');
+      const crypto = require('crypto');
       const { shell } = require('electron');
 
       const options = {
@@ -186,22 +187,28 @@ function setupUpdaterIpc() {
       });
 
       if (!releaseInfo || !Array.isArray(releaseInfo.assets)) {
-        return { success: false, error: 'Impossibile trovare gli asset della release su GitHub' };
+        return { success: false, error: 'Impossibile accedere alle informazioni di release su GitHub' };
       }
 
       const exeAsset = releaseInfo.assets.find(a => a.name.endsWith('.exe'));
       if (!exeAsset || !exeAsset.browser_download_url) {
-        return { success: false, error: 'Installer .exe non trovato nei file di release' };
+        return { success: false, error: 'Installer eseguibile non trovato tra gli asset ufficiali' };
       }
 
+      const expectedSize = exeAsset.size || 0;
       const downloadUrl = exeAsset.browser_download_url;
       const localFileName = exeAsset.name;
-      const downloadPath = path.join(app.getPath('downloads'), localFileName);
+      const finalPath = path.join(app.getPath('downloads'), localFileName);
+      const tempPath = finalPath + '.tmp';
 
       return new Promise((resolve) => {
+        let startTime = Date.now();
+        let lastTime = Date.now();
+        let lastBytes = 0;
+
         function followAndStream(currentUrl, maxRedirects = 10) {
           if (maxRedirects <= 0) {
-            resolve({ success: false, error: 'Troppi reindirizzamenti durante il download' });
+            resolve({ success: false, error: 'Superato il limite massimo di reindirizzamenti HTTP' });
             return;
           }
 
@@ -218,41 +225,78 @@ function setupUpdaterIpc() {
             }
 
             if (res.statusCode !== 200) {
-              resolve({ success: false, error: `Errore dal server HTTP ${res.statusCode}` });
+              resolve({ success: false, error: `Risposta del server HTTP non valida: ${res.statusCode}` });
               return;
             }
 
-            const totalBytes = parseInt(res.headers['content-length'] || '0', 10);
+            const totalBytes = parseInt(res.headers['content-length'] || expectedSize, 10);
             let receivedBytes = 0;
 
-            const fileStream = fs.createWriteStream(downloadPath);
+            const fileStream = fs.createWriteStream(tempPath);
             res.pipe(fileStream);
 
             res.on('data', (chunk) => {
               receivedBytes += chunk.length;
-              if (totalBytes > 0 && mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
-                const percent = Math.round((receivedBytes / totalBytes) * 100);
+              const now = Date.now();
+              const elapsedSec = (now - lastTime) / 1000;
+
+              let speedMb = 0;
+              if (elapsedSec >= 0.5) {
+                speedMb = ((receivedBytes - lastBytes) / (1024 * 1024)) / elapsedSec;
+                lastTime = now;
+                lastBytes = receivedBytes;
+              }
+
+              if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+                const percent = totalBytes > 0 ? Math.round((receivedBytes / totalBytes) * 100) : 0;
                 try {
-                  mainWindow.webContents.send('update:progress', { percent });
+                  mainWindow.webContents.send('update:progress', {
+                    percent,
+                    transferredMb: (receivedBytes / (1024 * 1024)).toFixed(1),
+                    totalMb: totalBytes > 0 ? (totalBytes / (1024 * 1024)).toFixed(1) : '?',
+                    speedMb: speedMb.toFixed(1)
+                  });
                 } catch(e) {}
               }
             });
 
             fileStream.on('finish', () => {
-              fileStream.close(() => {
-                shell.openPath(downloadPath);
-                setTimeout(() => app.quit(), 1500);
-                resolve({ success: true, path: downloadPath });
+              fileStream.close(async () => {
+                if (expectedSize > 0 && receivedBytes !== expectedSize) {
+                  try { fs.unlinkSync(tempPath); } catch(e) {}
+                  resolve({ success: false, error: `Corruzione dati rilevata: ricevuti ${receivedBytes} byte su ${expectedSize} attesi` });
+                  return;
+                }
+
+                try {
+                  const hash = crypto.createHash('sha256');
+                  const input = fs.createReadStream(tempPath);
+                  input.on('data', chunk => hash.update(chunk));
+                  input.on('end', () => {
+                    const sha256 = hash.digest('hex');
+                    if (fs.existsSync(finalPath)) {
+                      try { fs.unlinkSync(finalPath); } catch(e) {}
+                    }
+                    fs.renameSync(tempPath, finalPath);
+                    shell.openPath(finalPath);
+                    setTimeout(() => app.quit(), 1500);
+                    resolve({ success: true, sha256, size: receivedBytes, path: finalPath });
+                  });
+                } catch (errHash) {
+                  resolve({ success: false, error: 'Errore nella verifica dell\'impronta SHA-256: ' + errHash.message });
+                }
               });
             });
 
             fileStream.on('error', (err) => {
-              resolve({ success: false, error: 'Errore scrittura file: ' + err.message });
+              try { fs.unlinkSync(tempPath); } catch(e) {}
+              resolve({ success: false, error: 'Errore durante la scrittura del file temporaneo: ' + err.message });
             });
           });
 
           req.on('error', (err) => {
-            resolve({ success: false, error: 'Errore di download: ' + err.message });
+            try { fs.unlinkSync(tempPath); } catch(e) {}
+            resolve({ success: false, error: 'Errore di connessione durante il download: ' + err.message });
           });
         }
 

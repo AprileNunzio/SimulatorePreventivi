@@ -208,20 +208,24 @@ const PreventivoForm = {
           return;
         }
 
-                suggBox.innerHTML = res.map(c => `
-          <div class="sugg-item" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--border); font-size:13px;"
-               data-client='${JSON.stringify(c).replace(/'/g, "&apos;")}'>
-            <div style="font-weight:600">${c.nome}</div>
-            ${c.ragione_sociale ? `<div style="font-size:11px;color:var(--text-muted)">${c.ragione_sociale}</div>` : ''}
-            ${c.piva ? `<div style="font-size:11px;color:var(--text-muted)">P.IVA: ${c.piva}</div>` : ''}
-          </div>
-        `).join('');
+                suggBox.innerHTML = res.map(c => {
+          const clientName = [c.nome, c.cognome].filter(Boolean).join(' ');
+          return `
+            <div class="sugg-item" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--border); font-size:13px;"
+                 data-client='${JSON.stringify(c).replace(/'/g, "&apos;")}'>
+              <div style="font-weight:600">${c.ragione_sociale ? c.ragione_sociale : clientName}</div>
+              ${c.ragione_sociale && clientName ? `<div style="font-size:11px;color:var(--text-muted)">Ref: ${clientName}</div>` : ''}
+              ${c.piva ? `<div style="font-size:11px;color:var(--text-muted)">P.IVA: ${c.piva}</div>` : ''}
+            </div>
+          `;
+        }).join('');
         suggBox.style.display = 'block';
 
         suggBox.querySelectorAll('.sugg-item').forEach(item => {
           item.addEventListener('click', () => {
             const c = JSON.parse(item.dataset.client.replace(/&apos;/g, "'"));
-            el.querySelector('#f-cnome').value = c.nome || '';
+            const clientName = [c.nome, c.cognome].filter(Boolean).join(' ');
+            el.querySelector('#f-cnome').value = clientName || c.nome || '';
             el.querySelector('#f-crs').value = c.ragione_sociale || '';
             el.querySelector('#f-cpiva').value = c.piva || '';
             el.querySelector('#f-ccf').value = c.cf || '';
@@ -309,7 +313,30 @@ const PreventivoForm = {
           }
         } catch (e) {}
       }
+
+      if (params && params.clienteId) {
+        window.electronAPI.getClienteById(params.clienteId).then(c => {
+          if (c) {
+            const clientName = [c.nome, c.cognome].filter(Boolean).join(' ');
+            el.querySelector('#f-cnome').value = clientName || c.nome || '';
+            el.querySelector('#f-crs').value = c.ragione_sociale || '';
+            el.querySelector('#f-cpiva').value = c.piva || '';
+            el.querySelector('#f-ccf').value = c.cf || '';
+            el.querySelector('#f-cemail').value = c.email || '';
+            el.querySelector('#f-ctel').value = c.telefono || '';
+            el.querySelector('#f-cind').value = c.indirizzo || '';
+            el.querySelector('#f-ccitta').value = c.citta || '';
+            el.querySelector('#f-ccap').value = c.cap || '';
+            el.querySelector('#f-cprov').value = c.provincia || '';
+            el.querySelector('#f-cnaz').value = c.nazione || 'IT';
+            el.querySelector('#f-csdi').value = c.codice_destinatario || '';
+            el.querySelector('#f-cpec').value = c.pec || '';
+            el.querySelector('#f-cpa').checked = !!c.pa;
+          }
+        });
+      }
     }
+
   },
 
   getFormData(el) {

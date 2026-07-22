@@ -54,21 +54,45 @@ export async function lookupCapInfo(capRaw) {
   return null;
 }
 
-export function bindCapAutoFill(capInputEl, cittaInputEl, provInputEl, nazInputEl) {
-  if (!capInputEl) return;
+function resolveEl(arg) {
+  if (!arg) return null;
+  if (typeof arg === 'string') return document.getElementById(arg);
+  if (typeof arg === 'object' && arg.nodeType === 1) return arg;
+  return null;
+}
 
-  capInputEl.addEventListener('input', async () => {
-    const val = capInputEl.value.trim();
+export function bindCapAutoFill(arg1, arg2, arg3, arg4) {
+  let capEl = null;
+  let cittaEl = null;
+  let provEl = null;
+  let nazEl = null;
+
+  if (arg1 && typeof arg1 === 'object' && !arg1.nodeType) {
+    capEl = resolveEl(arg1.capInputId || arg1.capInput || arg1.cap);
+    cittaEl = resolveEl(arg1.cittaInputId || arg1.cittaInput || arg1.citta);
+    provEl = resolveEl(arg1.provinciaInputId || arg1.provInputId || arg1.provincia);
+    nazEl = resolveEl(arg1.nazioneInputId || arg1.nazInputId || arg1.nazione);
+  } else {
+    capEl = resolveEl(arg1);
+    cittaEl = resolveEl(arg2);
+    provEl = resolveEl(arg3);
+    nazEl = resolveEl(arg4);
+  }
+
+  if (!capEl || !capEl.addEventListener) return;
+
+  capEl.addEventListener('input', async () => {
+    const val = capEl.value.trim();
     if (val.length === 5) {
       const info = await lookupCapInfo(val);
       if (info) {
-        if (cittaInputEl) cittaInputEl.value = info.comune;
-        if (provInputEl) provInputEl.value = info.provincia;
-        if (nazInputEl) nazInputEl.value = info.nazione;
+        if (cittaEl) cittaEl.value = info.comune;
+        if (provEl) provEl.value = info.provincia;
+        if (nazEl) nazEl.value = info.nazione;
 
-        cittaInputEl?.dispatchEvent(new Event('change'));
-        provInputEl?.dispatchEvent(new Event('change'));
-        nazInputEl?.dispatchEvent(new Event('change'));
+        cittaEl?.dispatchEvent(new Event('change'));
+        provEl?.dispatchEvent(new Event('change'));
+        nazEl?.dispatchEvent(new Event('change'));
       }
     }
   });

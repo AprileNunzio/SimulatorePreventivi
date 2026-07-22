@@ -164,32 +164,36 @@ function listBackups() {
     const dir = global.BACKUP_PATH;
     if (!fs.existsSync(dir)) return [];
 
-        const files = fs.readdirSync(dir);
+    const files = fs.readdirSync(dir);
     const backups = files.map(file => {
       if (!file.startsWith('backup_') || !file.endsWith('.json')) return null;
       if (file === 'backup_encrypted.json') return null; 
 
-            const stat = fs.statSync(path.join(dir, file));
+      const stat = fs.statSync(path.join(dir, file));
 
-            let type = 'Daily Snapshot';
-      if (file === 'backup_latest.json') type = 'Latest Auto-Save';
-      else if (file.includes('pre_restore')) type = 'Pre-Restore Safety';
-      else if (file.includes('startup')) type = 'App Startup';
+      let type = 'Snapshot Automatico';
+      if (file === 'backup_latest.json') type = 'Ultimo Salvataggio';
+      else if (file.includes('pre_restore')) type = 'Sicurezza Pre-Ripristino';
+      else if (file.includes('startup')) type = 'Avvio Software';
 
-            return {
-        file,
-        type,
+      const sizeKb = (stat.size / 1024).toFixed(1);
+
+      return {
+        filename: file,
+        file: file,
+        type: type,
         sizeBytes: stat.size,
-        createdAt: stat.mtime.toISOString(),
+        sizeFormatted: `${sizeKb} KB`,
+        date: stat.mtime.toISOString(),
         dateLabel: stat.mtime.toLocaleDateString('it-IT') + ' ' + stat.mtime.toLocaleTimeString('it-IT')
       };
     }).filter(b => b !== null);
 
-    backups.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    return backups;
+    backups.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return { success: true, backups: backups };
   } catch (err) {
     console.error('[Backup List] Errore:', err.message);
-    return [];
+    return { success: false, backups: [] };
   }
 }
 

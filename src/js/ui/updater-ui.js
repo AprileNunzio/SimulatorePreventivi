@@ -73,11 +73,15 @@ export const UpdaterUI = {
 
         <div id="update-progress-container" style="display: none; margin-top: 15px;">
           <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">
-            <span>Download dell'aggiornamento in corso...</span>
+            <span id="update-progress-status">Download in corso...</span>
             <span id="update-progress-text">0%</span>
           </div>
-          <div style="width: 100%; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden;">
+          <div style="width: 100%; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; margin-bottom: 6px;">
             <div id="update-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); transition: width 0.3s ease;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);" class="td-mono">
+            <span id="update-details-size">0 MB / 0 MB</span>
+            <span id="update-details-speed">0 MB/s</span>
           </div>
         </div>
       </div>
@@ -97,6 +101,9 @@ export const UpdaterUI = {
     const progContainer = document.getElementById('update-progress-container');
     const progText = document.getElementById('update-progress-text');
     const progBar = document.getElementById('update-progress-bar');
+    const progStatus = document.getElementById('update-progress-status');
+    const detailsSize = document.getElementById('update-details-size');
+    const detailsSpeed = document.getElementById('update-details-speed');
 
     btnStart?.addEventListener('click', async () => {
       btnStart.disabled = true;
@@ -108,16 +115,24 @@ export const UpdaterUI = {
           const pct = Math.round(info.percent || 0);
           if (progText) progText.textContent = `${pct}%`;
           if (progBar) progBar.style.width = `${pct}%`;
+          if (detailsSize && info.transferredMb && info.totalMb) {
+            detailsSize.textContent = `${info.transferredMb} MB / ${info.totalMb} MB`;
+          }
+          if (detailsSpeed && info.speedMb) {
+            detailsSpeed.textContent = `${info.speedMb} MB/s`;
+          }
         });
       }
 
       const dlRes = await window.electronAPI.downloadUpdate(newVer);
       if (!dlRes || !dlRes.success) {
-        toast('Errore download aggiornamento: ' + (dlRes?.error || 'Download fallito'), 'error');
+        toast('Errore download o verifica pacchetto: ' + (dlRes?.error || 'Fallito'), 'error');
         btnStart.disabled = false;
         if (btnCancel) btnCancel.style.display = 'inline-block';
+        if (progStatus) progStatus.textContent = 'Download fallito';
       } else {
-        toast('Download completato! Avvio dell\'installer in corso...', 'success');
+        if (progStatus) progStatus.textContent = '🔒 Hash SHA-256 Verificato! Avvio installer...';
+        toast(`Download e verifica SHA-256 completati (${dlRes.sha256 ? dlRes.sha256.slice(0, 8) : 'OK'}...). Avvio dell'installer...`, 'success');
       }
     });
   }

@@ -382,7 +382,105 @@ function initializeDatabaseSchema(db) {
     );
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS lotti_magazzino (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      prodotto_id INTEGER NOT NULL,
+      numero_lotto TEXT NOT NULL,
+      data_scadenza TEXT NOT NULL,
+      data_arrivo TEXT DEFAULT (date('now')),
+      quantita_iniziale REAL NOT NULL DEFAULT 0,
+      giacenza_attuale REAL NOT NULL DEFAULT 0,
+      temperatura_conservazione TEXT DEFAULT 'Ambiente',
+      note TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS movimenti_lotti (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lotto_id INTEGER NOT NULL,
+      tipo_movimento TEXT NOT NULL,
+      quantita REAL NOT NULL,
+      riferimento_documento TEXT DEFAULT '',
+      causale_haccp TEXT DEFAULT '',
+      operatore TEXT DEFAULT 'system',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS pos_sessioni (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      data_apertura TEXT DEFAULT (datetime('now')),
+      data_chiusura TEXT DEFAULT '',
+      fondo_cassa_iniziale REAL DEFAULT 0,
+      totale_incassato_contanti REAL DEFAULT 0,
+      totale_incassato_pos REAL DEFAULT 0,
+      totale_incassato_altri REAL DEFAULT 0,
+      totale_scontrini INTEGER DEFAULT 0,
+      stato TEXT DEFAULT 'APERTA',
+      note TEXT DEFAULT ''
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS pos_scontrini (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sessione_id INTEGER NOT NULL,
+      numero_scontrino TEXT NOT NULL,
+      data_ora TEXT DEFAULT (datetime('now')),
+      totale_lordo REAL NOT NULL DEFAULT 0,
+      sconto_totale REAL DEFAULT 0,
+      totale_netto REAL NOT NULL DEFAULT 0,
+      pagamento_metodo TEXT DEFAULT 'CONTANTI',
+      importo_pagato REAL DEFAULT 0,
+      resto REAL DEFAULT 0,
+      cliente_id INTEGER,
+      operatore TEXT DEFAULT 'system'
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS pos_scontrino_righe (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scontrino_id INTEGER NOT NULL,
+      prodotto_id INTEGER NOT NULL,
+      lotto_id INTEGER,
+      descrizione TEXT NOT NULL,
+      quantita REAL NOT NULL DEFAULT 1,
+      unita_misura TEXT DEFAULT 'pz',
+      prezzo_unitario REAL NOT NULL DEFAULT 0,
+      sconto_percentuale REAL DEFAULT 0,
+      totale_riga REAL NOT NULL DEFAULT 0
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS utenti (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      pin TEXT NOT NULL DEFAULT '123456',
+      nome TEXT NOT NULL,
+      cognome TEXT DEFAULT '',
+      ruolo TEXT NOT NULL DEFAULT 'cassiere',
+      permessi_custom TEXT DEFAULT '',
+      attivo INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
+  try { db.run("ALTER TABLE utenti ADD COLUMN permessi_custom TEXT DEFAULT ''"); } catch (e) {}
+
+
   try { db.run("ALTER TABLE prodotti_magazzino ADD COLUMN prezzo_medio_ponderato REAL NOT NULL DEFAULT 0"); } catch (e) {}
+  try { db.run("ALTER TABLE prodotti_magazzino ADD COLUMN gestione_lotti INTEGER NOT NULL DEFAULT 0"); } catch (e) {}
+  try { db.run("ALTER TABLE prodotti_magazzino ADD COLUMN gestione_peso INTEGER NOT NULL DEFAULT 0"); } catch (e) {}
+  try { db.run("ALTER TABLE prodotti_magazzino ADD COLUMN tara_gr REAL NOT NULL DEFAULT 0"); } catch (e) {}
+  try { db.run("ALTER TABLE prodotti_magazzino ADD COLUMN allergeni TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE prodotti_magazzino ADD COLUMN valori_nutrizionali TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE prodotti_magazzino ADD COLUMN temp_conservazione TEXT DEFAULT 'Ambiente'"); } catch (e) {}
   try { db.run("ALTER TABLE voci_preventivo ADD COLUMN aliquota_iva REAL NOT NULL DEFAULT 22.0"); } catch (e) {}
   try { db.run("ALTER TABLE voci_preventivo ADD COLUMN natura_iva TEXT DEFAULT ''"); } catch (e) {}
   try { db.run("ALTER TABLE voci_preventivo ADD COLUMN opzionale INTEGER NOT NULL DEFAULT 0"); } catch (e) {}
@@ -392,9 +490,20 @@ function initializeDatabaseSchema(db) {
   try { db.run("ALTER TABLE fatture ADD COLUMN cassa_previdenziale_attiva INTEGER NOT NULL DEFAULT 0"); } catch (e) {}
   try { db.run("ALTER TABLE fatture ADD COLUMN cassa_previdenziale_tipo TEXT DEFAULT 'TC03'"); } catch (e) {}
   try { db.run("ALTER TABLE fatture ADD COLUMN cassa_previdenziale_percentuale REAL NOT NULL DEFAULT 0"); } catch (e) {}
-  try { db.run("ALTER TABLE fatture ADD COLUMN importo_cassa REAL NOT NULL DEFAULT 0"); } catch (e) {}
   try { db.run("ALTER TABLE fatture ADD COLUMN ddt_id INTEGER"); } catch (e) {}
   try { db.run("ALTER TABLE fatture ADD COLUMN stato_sdi TEXT DEFAULT 'non_inviata'"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN cognome TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN forma_giuridica TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN data_nascita TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN luogo_nascita TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN sesso TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN cellulare TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN sito_web TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN iban TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN banca TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN condizioni_pagamento TEXT DEFAULT ''"); } catch (e) {}
+  try { db.run("ALTER TABLE clienti ADD COLUMN note TEXT DEFAULT ''"); } catch (e) {}
 }
 
 module.exports = { initializeDatabaseSchema };
+

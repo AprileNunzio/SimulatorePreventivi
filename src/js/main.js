@@ -16,6 +16,13 @@ import collaboratoreLedger from './pages/collaboratore-ledger.js';
 import ai from './pages/ai.js';
 import sincronizzazione from './pages/sincronizzazione.js';
 import documentazione from './pages/documentazione.js';
+import ddt from './pages/ddt.js';
+import scadenze from './pages/scadenze.js';
+import posTouch from './pages/pos-touch.js';
+import lottiScadenze from './pages/lotti-scadenze.js';
+import dipendenti from './pages/dipendenti.js';
+import { showLoginScreen } from './ui/login-overlay.js';
+import { showFirstRunWizard } from './ui/first-run-wizard.js';
 import { initAISidebarWidget } from '../ui/ai-sidebar-widget.js';
 import { AI_TOOL_REGISTRY } from '../ai/ai-manager.js';
 import { CommandPalette } from './ui/command-palette.js';
@@ -28,9 +35,6 @@ window.toast = toast;
 window.Router = Router;
 window.UpdaterUI = UpdaterUI;
 
-import ddt from './pages/ddt.js';
-import scadenze from './pages/scadenze.js';
-
 window.Pages = {
     dashboard,
     preventivi,
@@ -41,6 +45,7 @@ window.Pages = {
     scadenze,
     ddt,
     collaboratori,
+    dipendenti,
     impostazioni,
     magazzino,
     'magazzino-edit': magazzinoEdit,
@@ -49,9 +54,12 @@ window.Pages = {
     'collaboratore-ledger': collaboratoreLedger,
     ai,
     sincronizzazione,
-    documentazione
+    documentazione,
+    'pos-touch': posTouch,
+    'lotti-scadenze': lottiScadenze
 };
 window.PreventivoDetail = preventivoDetail;
+
 
 
 let pinAttempts = 0;
@@ -361,6 +369,19 @@ function showUpdateBanner(version) {
 window.addEventListener('DOMContentLoaded', async () => {
   console.log("DOMContentLoaded FIRED");
 
+  // Applica tema salvato (light per default)
+  const savedTheme = localStorage.getItem('app_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  // Espone toggle globale per le Impostazioni
+  window.toggleTheme = () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('app_theme', next);
+    return next;
+  };
+
   initAISidebarWidget();
 
   try {
@@ -429,17 +450,29 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (splashVerEl && vInfo?.version) splashVerEl.textContent = `by NunzioTech - v${vInfo.version}`;
   } catch {}
 
-  await initPin();
+  // initPin() legacy disabilitato — ora sostituito da showLoginScreen() in login-overlay.js
+  // await initPin();
 
   setTimeout(async () => {
     const splash = document.getElementById('splash');
     if (splash) {
       splash.style.opacity = '0';
       splash.style.transition = 'opacity 0.4s';
-      setTimeout(() => {
+      setTimeout(async () => {
         splash.remove();
         console.log("SPLASH REMOVED");
         document.getElementById('main-layout')?.classList.remove('hidden');
+
+        // Controlla primo avvio → mostra wizard di setup
+        try {
+          const firstRun = await window.electronAPI.isFirstRun();
+          if (firstRun) {
+            showFirstRunWizard();
+            return;
+          }
+        } catch (e) { /* se l'API non risponde, vai al login normale */ }
+
+        showLoginScreen();
       }, 400);
     }
   }, 1500);

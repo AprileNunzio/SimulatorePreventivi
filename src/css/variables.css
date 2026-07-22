@@ -79,3 +79,39 @@
   --stato-rifiutato: #dc2626;
   --stato-pagato:    #8b5cf6;
 }
+
+/* ===== TEMA SCURO (Dark Mode) ===== */
+[data-theme="dark"] {
+  --bg-base:       #0d1117;
+  --bg-surface:    #161b22;
+  --bg-card:       #1a2232;
+  --bg-hover:      #21293a;
+  --bg-active:     #1e3a5f;
+  --bg-input:      #1a2232;
+  --bg-sidebar:    #0d1117;
+  --bg-sidebar-hover: #21293a;
+  --bg-sidebar-active: #1d4ed8;
+
+  --text-primary:  #e2e8f0;
+  --text-secondary:#94a3b8;
+  --text-muted:    #64748b;
+  --text-disabled: #475569;
+  --text-inverse:  #0f172a;
+
+  --border:        #2a3441;
+  --border-light:  #1e2836;
+  --border-focus:  #3b82f6;
+
+  --shadow-xs:  0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm:  0 1px 4px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow:     0 4px 12px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.2);
+  --shadow-lg:  0 10px 30px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+
+  --primary-glow: rgba(59, 130, 246, 0.2);
+  --success-bg:   #052e16;
+  --warning-bg:   #1c1408;
+  --danger-bg:    #1c0606;
+  --info-bg:      #061425;
+  --accent-bg:    #160f28;
+  --primary-bg:   #0c1a3a;
+}

@@ -50,17 +50,52 @@ export function toast(msg, type = 'info', duration = 3500) {
 
 export const Modal = {
   show(title, body, footer = '', opts = {}) {
-    document.getElementById('modal-title').textContent = title;
-    document.getElementById('modal-body').innerHTML = body;
-    document.getElementById('modal-footer').innerHTML = footer;
+    let t = title, b = body, f = footer, o = opts;
+
+    if (typeof title === 'object' && title !== null) {
+      t = title.title || 'Informazione';
+      b = title.body || title.content || '';
+      o = title;
+      if (title.confirmText || title.onConfirm) {
+        const confirmId = 'modal-auto-confirm-btn';
+        const cancelId = 'modal-auto-cancel-btn';
+        f = `
+          <button class="btn btn-ghost" id="${cancelId}">Annulla</button>
+          <button class="btn btn-primary" id="${confirmId}">${title.confirmText || 'Conferma'}</button>
+        `;
+        setTimeout(() => {
+          document.getElementById(cancelId)?.addEventListener('click', () => {
+            if (typeof title.onCancel === 'function') title.onCancel();
+            Modal.close();
+          });
+          document.getElementById(confirmId)?.addEventListener('click', async () => {
+            if (typeof title.onConfirm === 'function') {
+              const res = await title.onConfirm();
+              if (res !== false) Modal.close();
+            } else {
+              Modal.close();
+            }
+          });
+        }, 50);
+      } else {
+        f = title.footer || '';
+      }
+    }
+
+    document.getElementById('modal-title').textContent = t;
+    document.getElementById('modal-body').innerHTML = b;
+    document.getElementById('modal-footer').innerHTML = f;
     const box = document.getElementById('modal-box');
-    box.className = opts.size ? `modal-${opts.size}` : '';
+    box.className = o.size ? `modal-${o.size}` : '';
+    if (o.width) box.style.maxWidth = o.width;
+    else box.style.maxWidth = '';
     document.getElementById('modal-overlay').classList.remove('hidden');
   },
   close() {
     document.getElementById('modal-overlay').classList.add('hidden');
   }
 };
+
 
 
 export const Router = {

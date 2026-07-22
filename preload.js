@@ -148,8 +148,49 @@ contextBridge.exposeInMainWorld('electronAPI', {
   sendInvoiceToSdi: (id) => ipcRenderer.invoke('sdi:sendInvoice', id),
   checkSdiNotifications: (id) => ipcRenderer.invoke('sdi:checkNotifications', id),
   importPassiveXml: (xml) => ipcRenderer.invoke('passive:importXml', xml),
-  generateReorders: () => ipcRenderer.invoke('inventory:generateReorders'),
   checkUserPermission: (role, mod) => ipcRenderer.invoke('auth:checkPermission', role, mod),
   getAvailableRoles: () => ipcRenderer.invoke('auth:getRoles'),
-  reconcileBankCsv: (csv) => ipcRenderer.invoke('finance:reconcileCsv', csv)
+  getPosConfig: () => ipcRenderer.invoke('pos:getConfig'),
+  savePosConfig: (cfg) => ipcRenderer.invoke('pos:saveConfig', cfg),
+
+  getAllEmployees: () => ipcRenderer.invoke('employee:getAll'),
+  getEmployeeByPin: (pin) => ipcRenderer.invoke('employee:getByPin', pin),
+  createEmployee: (data) => ipcRenderer.invoke('employee:create', data),
+  updateEmployee: (id, data) => ipcRenderer.invoke('employee:update', id, data),
+  deleteEmployee: (id) => ipcRenderer.invoke('employee:delete', id),
+  authenticateUser: (username, pin) => ipcRenderer.invoke('employee:authenticate', username, pin),
+
+  // DB Repair & Diagnostics
+  repairAdmin: (newPin) => ipcRenderer.invoke('db:repair', newPin),
+  validateDb: () => ipcRenderer.invoke('db:validate'),
+  isFirstRun: () => ipcRenderer.invoke('db:isFirstRun'),
+  completeFirstRun: (data) => ipcRenderer.invoke('db:completeFirstRun', data),
+  getEmergencyCode: () => ipcRenderer.invoke('db:emergencyCode'),
+  verifyEmergencyReset: (code, newPin) => ipcRenderer.invoke('db:verifyEmergencyReset', code, newPin),
+
+  // SMTP & Recupero PIN
+  testSmtp: () => ipcRenderer.invoke('smtp:test'),
+  isSmtpConfigured: () => ipcRenderer.invoke('smtp:isConfigured'),
+  sendPinReset: (email) => ipcRenderer.invoke('smtp:sendPinReset', email),
+  verifyPinResetCode: (email, code, newPin) => ipcRenderer.invoke('smtp:verifyResetCode', email, code, newPin),
+
+  testMysqlConnection: (cfg) => ipcRenderer.invoke('mysql:testConnection', cfg),
+  triggerMysqlSync: () => ipcRenderer.invoke('mysql:triggerSync'),
+  testFtpConnection: (cfg) => ipcRenderer.invoke('ftp:testConnection', cfg),
+  uploadEmergencyFtpBackup: () => ipcRenderer.invoke('ftp:uploadEmergencyBackup'),
+
+  // Lotti & Scadenze
+  getLottiByProdotto: (prodottoId) => ipcRenderer.invoke('db:lotti:getByProdotto', prodottoId),
+  addLotto: (data) => ipcRenderer.invoke('db:lotti:add', data),
+  scaricoDegradatoLotto: (lottoId, quantita, causaleHaccp, operatore) => ipcRenderer.invoke('db:lotti:scaricoDegradato', { lottoId, quantita, causaleHaccp, operatore }),
+  getScadenzeAlert: (giorni) => ipcRenderer.invoke('db:lotti:scadenzeAlert', giorni),
+  getRegistroTracciabilita: (lottoId) => ipcRenderer.invoke('db:lotti:tracciabilita', lottoId),
+
+  // POS Cassa Touch
+  getSessioneAttivaPos: () => ipcRenderer.invoke('db:pos:getSessioneAttiva'),
+  apriCassaPos: (fondoCassa, note) => ipcRenderer.invoke('db:pos:apriCassa', { fondoCassa, note }),
+  registraScontrinoPos: (data) => ipcRenderer.invoke('db:pos:registraScontrino', data),
+  chiudiCassaZPos: (note) => ipcRenderer.invoke('db:pos:chiudiCassaZ', { note }),
+  parseBarcodePos: (barcode) => ipcRenderer.invoke('db:pos:parseBarcode', barcode)
 });
+

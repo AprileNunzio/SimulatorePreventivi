@@ -11,6 +11,8 @@ const fatture = require('./fatture');
 
 const finanze = require('./finanze');
 const fornitori = require('./fornitori');
+const lotti = require('./lotti');
+const pos = require('./pos');
 
 module.exports = {
     setupDatabase: core.setupDatabase,
@@ -24,5 +26,8 @@ module.exports = {
     ...exportImport,
     ...fatture,
     ...fornitori,
-    ...finanze
+    ...finanze,
+    ...lotti,
+    ...pos
 };
+

@@ -1,10 +1,32 @@
-export function bindPivaCfValidator(pivaInputEl, cfInputEl, options = {}) {
-  const { currentId, type = 'cliente' } = options;
+function resolveEl(arg) {
+  if (!arg) return null;
+  if (typeof arg === 'string') return document.getElementById(arg);
+  if (typeof arg === 'object' && arg.nodeType === 1) return arg;
+  return null;
+}
+
+export function bindPivaCfValidator(arg1, arg2, arg3 = {}) {
+  let pivaInputEl = null;
+  let cfInputEl = null;
+  let options = {};
+
+  if (arg1 && typeof arg1 === 'object' && !arg1.nodeType) {
+    pivaInputEl = resolveEl(arg1.pivaInputId || arg1.pivaInput || arg1.piva);
+    cfInputEl = resolveEl(arg1.cfInputId || arg1.cfInput || arg1.cf);
+    options = arg1;
+  } else {
+    pivaInputEl = resolveEl(arg1);
+    cfInputEl = resolveEl(arg2);
+    options = arg3 || {};
+  }
+
+  const currentId = options.currentId || null;
+  const type = options.type || 'cliente';
 
   const ensureFeedbackEl = (inputEl) => {
     if (!inputEl) return null;
-    let fb = inputEl.parentNode.querySelector('.val-feedback');
-    if (!fb) {
+    let fb = inputEl.parentNode ? inputEl.parentNode.querySelector('.val-feedback') : null;
+    if (!fb && inputEl.parentNode) {
       fb = document.createElement('div');
       fb.className = 'val-feedback';
       fb.style.fontSize = '12px';
@@ -25,8 +47,8 @@ export function bindPivaCfValidator(pivaInputEl, cfInputEl, options = {}) {
     const fbCf = ensureFeedbackEl(cfInputEl);
 
     if (!piva && !cf) {
-      if (fbPiva) { fbPiva.textContent = ''; pivaInputEl.style.borderColor = ''; }
-      if (fbCf) { fbCf.textContent = ''; cfInputEl.style.borderColor = ''; }
+      if (fbPiva) { fbPiva.textContent = ''; if (pivaInputEl) pivaInputEl.style.borderColor = ''; }
+      if (fbCf) { fbCf.textContent = ''; if (cfInputEl) cfInputEl.style.borderColor = ''; }
       return;
     }
 
@@ -72,6 +94,6 @@ export function bindPivaCfValidator(pivaInputEl, cfInputEl, options = {}) {
     timer = setTimeout(validate, 350);
   };
 
-  pivaInputEl?.addEventListener('input', handleInput);
-  cfInputEl?.addEventListener('input', handleInput);
+  if (pivaInputEl && pivaInputEl.addEventListener) pivaInputEl.addEventListener('input', handleInput);
+  if (cfInputEl && cfInputEl.addEventListener) cfInputEl.addEventListener('input', handleInput);
 }

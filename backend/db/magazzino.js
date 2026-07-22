@@ -32,9 +32,10 @@ function addProdottoMagazzino(data) {
     INSERT INTO prodotti_magazzino (
       codice_articolo, descrizione, descrizione_lunga, immagine, categoria_id, unita_misura, prezzo_acquisto,
       prezzo_vendita, spese_accessorie, sconto_percentuale, giacenza, scorta_minima,
-      fornitore, brand, posizione_scaffale, peso_kg, dimensioni, ean_barcode, uuid
+      fornitore, brand, posizione_scaffale, peso_kg, dimensioni, ean_barcode, uuid,
+      gestione_lotti, gestione_peso, tara_gr, allergeni, valori_nutrizionali, temp_conservazione
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     data.codice_articolo || '', data.descrizione, data.descrizione_lunga || '', data.immagine || '',
     data.categoria_id || null, data.unita_misura || 'pz',
@@ -42,7 +43,9 @@ function addProdottoMagazzino(data) {
     parseFloat(data.spese_accessorie)||0, parseFloat(data.sconto_percentuale)||0,
     parseFloat(data.giacenza)||0, parseFloat(data.scorta_minima)||0,
     data.fornitore || '', data.brand || '', data.posizione_scaffale || '',
-    parseFloat(data.peso_kg)||0, data.dimensioni || '', data.ean_barcode || '', newUuid()
+    parseFloat(data.peso_kg)||0, data.dimensioni || '', data.ean_barcode || '', newUuid(),
+    data.gestione_lotti ? 1 : 0, data.gestione_peso ? 1 : 0, parseFloat(data.tara_gr)||0,
+    data.allergeni || '', data.valori_nutrizionali || '', data.temp_conservazione || 'Ambiente'
   ]);
   const prod = get('SELECT id FROM prodotti_magazzino ORDER BY id DESC LIMIT 1');
   if (prod) {
@@ -62,7 +65,8 @@ function updateProdottoMagazzino(id, data) {
     UPDATE prodotti_magazzino SET 
       codice_articolo = ?, descrizione = ?, descrizione_lunga = ?, immagine = ?, categoria_id = ?, unita_misura = ?, prezzo_acquisto = ?, prezzo_vendita = ?, 
       spese_accessorie = ?, sconto_percentuale = ?, giacenza = ?, scorta_minima = ?, frequenza_utilizzo = frequenza_utilizzo + 1, updated_at = datetime('now'),
-      fornitore = ?, brand = ?, posizione_scaffale = ?, peso_kg = ?, dimensioni = ?, ean_barcode = ?
+      fornitore = ?, brand = ?, posizione_scaffale = ?, peso_kg = ?, dimensioni = ?, ean_barcode = ?,
+      gestione_lotti = ?, gestione_peso = ?, tara_gr = ?, allergeni = ?, valori_nutrizionali = ?, temp_conservazione = ?
     WHERE id = ?
   `, [
     data.codice_articolo !== undefined ? data.codice_articolo : existing.codice_articolo,
@@ -83,6 +87,12 @@ function updateProdottoMagazzino(id, data) {
     data.peso_kg !== undefined ? parseFloat(data.peso_kg) : existing.peso_kg,
     data.dimensioni !== undefined ? data.dimensioni : existing.dimensioni,
     data.ean_barcode !== undefined ? data.ean_barcode : existing.ean_barcode,
+    data.gestione_lotti !== undefined ? (data.gestione_lotti ? 1 : 0) : existing.gestione_lotti,
+    data.gestione_peso !== undefined ? (data.gestione_peso ? 1 : 0) : existing.gestione_peso,
+    data.tara_gr !== undefined ? parseFloat(data.tara_gr) : existing.tara_gr,
+    data.allergeni !== undefined ? data.allergeni : existing.allergeni,
+    data.valori_nutrizionali !== undefined ? data.valori_nutrizionali : existing.valori_nutrizionali,
+    data.temp_conservazione !== undefined ? data.temp_conservazione : existing.temp_conservazione,
     id
   ]);
 
