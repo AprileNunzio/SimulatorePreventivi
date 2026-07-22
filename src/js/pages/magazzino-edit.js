@@ -185,10 +185,77 @@ export default {
           </div>
         </div>
       </div>
+      ${this.id ? `
+      <div class="card" style="margin-top:16px">
+        <div class="section-title" style="margin-bottom:12px">Listino a Scaglioni Quantita</div>
+        <div id="listini-scaglioni-container">Caricamento...</div>
+      </div>
+      ` : ''}
     `;
 
     this.bindEvents();
     this.calcPrices();
+    if (this.id) this.renderListiniScaglioni();
+  },
+
+  async renderListiniScaglioni() {
+    const container = document.getElementById('listini-scaglioni-container');
+    if (!container) return;
+
+    const scaglioni = await window.electronAPI.getScaglioniPrezzo(parseInt(this.id)) || [];
+
+    const righe = scaglioni.length === 0
+      ? `<tr><td colspan="4" style="padding:10px;text-align:center;color:var(--text-muted)">Nessuno scaglione, si applica il prezzo di listino base</td></tr>`
+      : scaglioni.map(s => `
+          <tr>
+            <td>${s.quantita_minima}+</td>
+            <td>${fmt.euro(s.prezzo_unitario)}</td>
+            <td>${s.cliente_id ? 'Cliente #' + s.cliente_id : 'Tutti i clienti'}</td>
+            <td><button class="btn btn-sm btn-danger" data-del-scaglione="${s.id}">Elimina</button></td>
+          </tr>`).join('');
+
+    container.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px">
+        <thead>
+          <tr style="text-align:left;color:var(--text-muted);border-bottom:1px solid var(--border)">
+            <th style="padding:6px">Qta minima</th><th style="padding:6px">Prezzo</th><th style="padding:6px">Ambito</th><th style="padding:6px"></th>
+          </tr>
+        </thead>
+        <tbody>${righe}</tbody>
+      </table>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+        <div class="form-group" style="margin:0"><label style="font-size:11px">Qta minima</label><input type="number" min="1" step="1" class="form-input" id="ls-qta" style="width:100px" value="1"></div>
+        <div class="form-group" style="margin:0"><label style="font-size:11px">Prezzo unitario</label><input type="number" min="0" step="0.01" class="form-input" id="ls-prezzo" style="width:120px"></div>
+        <div class="form-group" style="margin:0"><label style="font-size:11px">ID Cliente (opz.)</label><input type="number" min="1" step="1" class="form-input" id="ls-cliente" style="width:110px"></div>
+        <button class="btn btn-secondary btn-sm" id="ls-add">Aggiungi Scaglione</button>
+      </div>
+    `;
+
+    container.querySelectorAll('[data-del-scaglione]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await window.electronAPI.deleteScaglionePrezzo(parseInt(btn.dataset.delScaglione));
+        toast('Scaglione rimosso', 'success');
+        this.renderListiniScaglioni();
+      });
+    });
+
+    document.getElementById('ls-add')?.addEventListener('click', async () => {
+      const qta = parseFloat(document.getElementById('ls-qta').value) || 1;
+      const prezzo = parseFloat(document.getElementById('ls-prezzo').value);
+      const clienteId = document.getElementById('ls-cliente').value;
+      if (!prezzo || prezzo <= 0) {
+        toast('Inserire un prezzo valido', 'error');
+        return;
+      }
+      await window.electronAPI.addScaglionePrezzo({
+        prodotto_id: parseInt(this.id),
+        quantita_minima: qta,
+        prezzo_unitario: prezzo,
+        cliente_id: clienteId ? parseInt(clienteId) : null
+      });
+      toast('Scaglione aggiunto', 'success');
+      this.renderListiniScaglioni();
+    });
   },
 
   calcPrices() {

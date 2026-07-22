@@ -31,5 +31,24 @@ module.exports = [
       `);
       db.run('CREATE INDEX IF NOT EXISTS idx_fatture_passive_data ON fatture_passive(data)');
     }
+  },
+  {
+    version: 3,
+    name: 'listini_prezzi',
+    up(db) {
+      db.run(`
+        CREATE TABLE IF NOT EXISTS listini_prezzi (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          prodotto_id INTEGER NOT NULL,
+          cliente_id INTEGER,
+          quantita_minima REAL NOT NULL DEFAULT 1,
+          prezzo_unitario REAL NOT NULL DEFAULT 0,
+          note TEXT DEFAULT '',
+          created_at TEXT DEFAULT (datetime('now'))
+        );
+      `);
+      db.run('CREATE INDEX IF NOT EXISTS idx_listini_prodotto ON listini_prezzi(prodotto_id)');
+      db.run('CREATE INDEX IF NOT EXISTS idx_listini_cliente ON listini_prezzi(cliente_id)');
+    }
   }
 ];

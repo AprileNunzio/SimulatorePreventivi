@@ -49,3 +49,11 @@ test('la migrazione 2 crea la tabella fatture_passive', async () => {
   assert.ok(res.length && res[0].values.length === 1);
   db.close();
 });
+
+test('la migrazione 3 crea la tabella listini_prezzi', async () => {
+  const db = await creaDb();
+  runMigrations(db);
+  const res = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='listini_prezzi'");
+  assert.ok(res.length && res[0].values.length === 1);
+  db.close();
+});

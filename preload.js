@@ -150,6 +150,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getRegistroIvaVendite: (periodo) => ipcRenderer.invoke('accounting:registroIvaVendite', periodo),
   getRegistroIvaAcquisti: (periodo) => ipcRenderer.invoke('accounting:registroIvaAcquisti', periodo),
   getLiquidazioneIva: (periodo) => ipcRenderer.invoke('accounting:liquidazioneIva', periodo),
+
+  getScaglioniPrezzo: (prodottoId) => ipcRenderer.invoke('pricing:getScaglioni', prodottoId),
+  addScaglionePrezzo: (data) => ipcRenderer.invoke('pricing:addScaglione', data),
+  deleteScaglionePrezzo: (id) => ipcRenderer.invoke('pricing:deleteScaglione', id),
+  calcolaPrezzoProdotto: (prodottoId, opzioni) => ipcRenderer.invoke('pricing:calcolaPrezzo', prodottoId, opzioni),
   importPassiveXml: (xml) => ipcRenderer.invoke('passive:importXml', xml),
   checkUserPermission: (role, mod) => ipcRenderer.invoke('auth:checkPermission', role, mod),
   getAvailableRoles: () => ipcRenderer.invoke('auth:getRoles'),

@@ -39,8 +39,9 @@ Vedi [FASE0_FONDAMENTA_WORKLOG.md](FASE0_FONDAMENTA_WORKLOG.md).
 ## Priorita 4 — Corrispettivi / RT ⛔
 Richiede Registratore Telematico fisico (o emulatore certificato) e credenziali AdE. Da progettare come adapter `fiscal-printer/` analogo a SdI.
 
-## Priorita 5 — Magazzino avanzato ⛔
-Varianti (matrice), multi-deposito, listini/scaglioni, inventario fisico, etichette/EAN. Feature ampie, nessun blocco esterno: pianificabili come batch.
+## Priorita 5 — Magazzino avanzato 🟡 (in corso)
+- ✅ **Listini a scaglioni quantita** (tiered pricing): motore puro `pricing-engine.js` (testato, priorita prezzo cliente-specifico > scaglione generico > prezzo base), migrazione v3 `listini_prezzi`, servizio DB + IPC + preload, UI in `magazzino-edit.js` (tabella scaglioni + form aggiunta/eliminazione).
+- ⛔ Restano: varianti (matrice taglia/colore), multi-deposito, inventario fisico guidato, etichette/EAN. Pianificabili come batch successivi.
 
 ## Priorita 6 — Resto ⛔
 Incassi online (Stripe/PayPal/Nexi), riconciliazione bancaria reale (CAMT/CBI/OFX), GDPR (export/cancellazione), i18n/multivaluta/multi-azienda, **code signing** (acquisto certificato a carico del cliente).
