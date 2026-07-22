@@ -2,7 +2,6 @@ const core = require('./core');
 const { run, get, all, runTransaction, encryptText, decryptText, generateCodice, ricalcolaPreventivo, getImpostazione } = core;
 const fs = require('fs');
 const path = require('path');
-const { app } = require('electron');
 
 let backupTimer = null;
 function triggerBackup() {
