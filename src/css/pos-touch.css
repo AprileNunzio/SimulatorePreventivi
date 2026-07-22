@@ -145,7 +145,7 @@
 
 .pos-cart-table th {
   background: rgba(15, 23, 42, 0.95);
-  color: #64748b;
+  color: #94a3b8;
   padding: 8px 10px;
   text-align: left;
   font-weight: 700;
@@ -397,7 +397,7 @@
 
 .pos-product-card .unit-tag {
   font-size: 10px;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 /* Modal Dark Styling for POS */
@@ -424,165 +424,175 @@
   outline: none;
 }
 
-/* =========================================
-   POS TOUCH — TEMA CHIARO (Light Mode)
-   Attivato da: :root:not([data-theme="dark"])
-   ========================================= */
+/* POS TOUCH — TEMA CHIARO (Light Mode) */
 :root:not([data-theme="dark"]) .pos-container {
-  background: #f1f5f9;
+  background: #eef2f7;
   color: #0f172a;
 }
 
+/* Header */
 :root:not([data-theme="dark"]) .pos-header-bar {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
 }
 
-:root:not([data-theme="dark"]) .pos-time-display,
-:root:not([data-theme="dark"]) .pos-operator-info strong,
-:root:not([data-theme="dark"]) .pos-shift-label {
-  color: #0f172a;
-}
-
+/* Pannello carrello */
 :root:not([data-theme="dark"]) .pos-cart-panel {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
 }
 
-:root:not([data-theme="dark"]) .pos-cart-header,
-:root:not([data-theme="dark"]) .pos-cart-title {
+:root:not([data-theme="dark"]) .pos-cart-header {
   color: #0f172a;
-  border-color: #f1f5f9;
+  border-bottom-color: #e2e8f0;
 }
 
-:root:not([data-theme="dark"]) .pos-cart-item {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
-}
-
-:root:not([data-theme="dark"]) .pos-cart-item:hover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-}
-
-:root:not([data-theme="dark"]) .pos-cart-item-name {
-  color: #0f172a;
-}
-
-:root:not([data-theme="dark"]) .pos-cart-item-price {
-  color: #1d4ed8;
-}
-
-:root:not([data-theme="dark"]) .pos-cart-footer {
-  border-color: #e2e8f0;
-  background: #f8fafc;
-}
-
-:root:not([data-theme="dark"]) .pos-total-label {
-  color: #64748b;
-}
-
-:root:not([data-theme="dark"]) .pos-total-amount {
-  color: #0f172a;
-}
-
-:root:not([data-theme="dark"]) .pos-products-panel {
+/* Input barcode */
+:root:not([data-theme="dark"]) .pos-barcode-input {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-}
-
-:root:not([data-theme="dark"]) .pos-search-bar,
-:root:not([data-theme="dark"]) .pos-search-input {
-  background: #f1f5f9;
-  border: 1.5px solid #e2e8f0;
+  border-color: #2563eb;
   color: #0f172a;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.15);
 }
 
-:root:not([data-theme="dark"]) .pos-search-input:focus {
-  border-color: #3b82f6;
-  background: #fff;
-}
-
-:root:not([data-theme="dark"]) .pos-category-tabs {
-  border-color: #f1f5f9;
-}
-
-:root:not([data-theme="dark"]) .pos-category-tab {
-  background: #f1f5f9;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-}
-
-:root:not([data-theme="dark"]) .pos-category-tab.active,
-:root:not([data-theme="dark"]) .pos-category-tab:hover {
-  background: #1d4ed8;
-  color: white;
-  border-color: #1d4ed8;
-}
-
-:root:not([data-theme="dark"]) .pos-product-card {
-  background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  color: #0f172a;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-:root:not([data-theme="dark"]) .pos-product-card:hover {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  box-shadow: 0 4px 16px rgba(59,130,246,0.15);
-}
-
-:root:not([data-theme="dark"]) .pos-product-name {
-  color: #0f172a;
-}
-
-:root:not([data-theme="dark"]) .pos-product-price {
-  color: #1d4ed8;
-  font-weight: 800;
-}
-
-:root:not([data-theme="dark"]) .pos-product-sku {
+:root:not([data-theme="dark"]) .pos-barcode-input::placeholder {
   color: #94a3b8;
 }
 
-:root:not([data-theme="dark"]) .pos-product-stock {
-  color: #64748b;
+:root:not([data-theme="dark"]) .pos-barcode-input:focus {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 16px rgba(37, 99, 235, 0.3);
 }
 
-:root:not([data-theme="dark"]) .pos-numpad-btn {
-  background: #ffffff;
-  border: 1.5px solid #e2e8f0;
+/* Tabella carrello */
+:root:not([data-theme="dark"]) .pos-cart-table-wrap {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+:root:not([data-theme="dark"]) .pos-cart-table th {
+  background: #f1f5f9;
+  color: #475569;
+  border-bottom-color: #e2e8f0;
+}
+
+:root:not([data-theme="dark"]) .pos-cart-table td {
   color: #0f172a;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  border-bottom-color: #eef2f7;
 }
 
-:root:not([data-theme="dark"]) .pos-numpad-btn:hover {
-  background: #eff6ff;
-  border-color: #3b82f6;
+:root:not([data-theme="dark"]) .pos-cart-table tr:hover {
+  background: rgba(37, 99, 235, 0.05);
 }
 
-:root:not([data-theme="dark"]) .pos-modal-overlay {
-  background: rgba(15,23,42,0.5);
+:root:not([data-theme="dark"]) .pos-cart-table tr.selected {
+  background: rgba(37, 99, 235, 0.12);
+  border-left-color: #2563eb;
 }
 
-:root:not([data-theme="dark"]) .pos-modal-card {
+/* NumPad */
+:root:not([data-theme="dark"]) .pos-num-btn {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   color: #0f172a;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.16);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
-:root:not([data-theme="dark"]) .pos-modal-title {
+:root:not([data-theme="dark"]) .pos-num-btn:active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+:root:not([data-theme="dark"]) .pos-num-btn.btn-action {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+:root:not([data-theme="dark"]) .pos-num-btn.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+/* Box checkout / totale */
+:root:not([data-theme="dark"]) .pos-checkout-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+:root:not([data-theme="dark"]) .pos-total-amount {
+  color: #047857;
+  text-shadow: none;
+}
+
+/* Barra categorie */
+:root:not([data-theme="dark"]) .pos-cat-chip {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+:root:not([data-theme="dark"]) .pos-cat-chip.active {
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #1d4ed8;
+}
+
+/* Pulsanti reparto */
+:root:not([data-theme="dark"]) .pos-reparto-btn {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+:root:not([data-theme="dark"]) .pos-reparto-btn:hover {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.06);
+}
+
+/* Card prodotto */
+:root:not([data-theme="dark"]) .pos-product-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+:root:not([data-theme="dark"]) .pos-product-card:hover {
+  background: #f8faff;
+  border-color: #2563eb;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
+}
+
+:root:not([data-theme="dark"]) .pos-product-card .prod-title {
+  color: #0f172a;
+}
+
+:root:not([data-theme="dark"]) .pos-product-card .cat-tag {
+  color: #2563eb;
+}
+
+:root:not([data-theme="dark"]) .pos-product-card .price-tag {
+  color: #047857;
+}
+
+:root:not([data-theme="dark"]) .pos-product-card .unit-tag {
+  color: #64748b;
+}
+
+/* Modale POS */
+:root:not([data-theme="dark"]) .pos-modal-card {
   color: #0f172a;
 }
 
 :root:not([data-theme="dark"]) .pos-modal-input {
-  background: #f1f5f9;
-  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   color: #0f172a;
+}
+
+:root:not([data-theme="dark"]) .pos-modal-input:focus {
+  border-color: #2563eb;
 }

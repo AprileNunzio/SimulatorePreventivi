@@ -1,6 +1,28 @@
 import { Modal, toast } from '../utils.js';
 
 export const UpdaterUI = {
+  _progressBound: false,
+
+  _bindProgressOnce() {
+    if (this._progressBound || !window.electronAPI.onUpdateProgress) return;
+    this._progressBound = true;
+    window.electronAPI.onUpdateProgress((info) => {
+      const pct = Math.round(info.percent || 0);
+      const progText = document.getElementById('update-progress-text');
+      const progBar = document.getElementById('update-progress-bar');
+      const detailsSize = document.getElementById('update-details-size');
+      const detailsSpeed = document.getElementById('update-details-speed');
+      if (progText) progText.textContent = `${pct}%`;
+      if (progBar) progBar.style.width = `${pct}%`;
+      if (detailsSize && info.transferredMb && info.totalMb) {
+        detailsSize.textContent = `${info.transferredMb} MB / ${info.totalMb} MB`;
+      }
+      if (detailsSpeed && info.speedMb) {
+        detailsSpeed.textContent = `${info.speedMb} MB/s`;
+      }
+    });
+  },
+
   async checkManual() {
     try {
       toast('Controllo nuovi aggiornamenti in corso...', 'info');
@@ -99,30 +121,14 @@ export const UpdaterUI = {
     const btnStart = document.getElementById('btn-start-download');
     const btnCancel = document.getElementById('btn-cancel-update');
     const progContainer = document.getElementById('update-progress-container');
-    const progText = document.getElementById('update-progress-text');
-    const progBar = document.getElementById('update-progress-bar');
     const progStatus = document.getElementById('update-progress-status');
-    const detailsSize = document.getElementById('update-details-size');
-    const detailsSpeed = document.getElementById('update-details-speed');
+
+    this._bindProgressOnce();
 
     btnStart?.addEventListener('click', async () => {
       btnStart.disabled = true;
       if (btnCancel) btnCancel.style.display = 'none';
       if (progContainer) progContainer.style.display = 'block';
-
-      if (window.electronAPI.onUpdateProgress) {
-        window.electronAPI.onUpdateProgress((info) => {
-          const pct = Math.round(info.percent || 0);
-          if (progText) progText.textContent = `${pct}%`;
-          if (progBar) progBar.style.width = `${pct}%`;
-          if (detailsSize && info.transferredMb && info.totalMb) {
-            detailsSize.textContent = `${info.transferredMb} MB / ${info.totalMb} MB`;
-          }
-          if (detailsSpeed && info.speedMb) {
-            detailsSpeed.textContent = `${info.speedMb} MB/s`;
-          }
-        });
-      }
 
       const dlRes = await window.electronAPI.downloadUpdate(newVer);
       if (!dlRes || !dlRes.success) {

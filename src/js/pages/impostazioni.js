@@ -23,7 +23,20 @@ const REGIMI_FISCALI = [
 
 export default {
   async render(el) {
-    const bRes = await window.electronAPI.listBackups();
+    let s = {};
+    try {
+      s = (await window.electronAPI.getImpostazioni()) || {};
+    } catch (err) {
+      console.error('[impostazioni] getImpostazioni fallita:', err);
+      s = {};
+    }
+
+    let bRes = [];
+    try {
+      bRes = await window.electronAPI.listBackups();
+    } catch (err) {
+      console.error('listBackups fallita:', err);
+    }
     const backups = Array.isArray(bRes) ? bRes : (bRes && Array.isArray(bRes.backups) ? bRes.backups : []);
 
 

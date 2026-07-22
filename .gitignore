@@ -40,3 +40,18 @@ refactor.js
 test_exports/
 gen-icon.js
 make_ico.py
+
+# Backup / scratch / artefatti
+*.bak
+*.orig
+*.tmp
+*~
+scratchpad/
+
+# Build metadata (electron-builder)
+dist/builder-debug.yml
+dist/builder-effective-config.yaml
+
+# Package manager
+pnpm-debug.log*
+yarn-error.log

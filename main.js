@@ -133,7 +133,20 @@ function setupUpdaterIpc() {
       };
 
       return new Promise((resolve) => {
-        https.get(options, (res) => {
+        let settled = false;
+        const done = (r) => { if (!settled) { settled = true; resolve(r); } };
+
+        const req = https.get(options, (res) => {
+          if (res.statusCode === 403) {
+            res.resume();
+            done({ success: false, error: 'Limite richieste GitHub raggiunto (rate limit). Riprova tra qualche minuto.' });
+            return;
+          }
+          if (res.statusCode !== 200) {
+            res.resume();
+            done({ success: false, error: `GitHub ha risposto con stato ${res.statusCode}` });
+            return;
+          }
           let data = '';
           res.on('data', chunk => data += chunk);
           res.on('end', () => {
@@ -143,16 +156,23 @@ function setupUpdaterIpc() {
               const changelog = release.body || '';
 
               if (latestVersion && latestVersion !== currentVersion) {
-                resolve({ success: true, hasUpdate: true, version: latestVersion, body: changelog });
+                done({ success: true, hasUpdate: true, version: latestVersion, body: changelog });
               } else {
-                resolve({ success: true, hasUpdate: false, version: currentVersion });
+                done({ success: true, hasUpdate: false, version: currentVersion });
               }
             } catch (err) {
-              resolve({ success: false, error: 'Errore durante la lettura delle informazioni di release' });
+              done({ success: false, error: 'Errore durante la lettura delle informazioni di release' });
             }
           });
-        }).on('error', (err) => {
-          resolve({ success: false, error: 'Errore di connessione a GitHub: ' + err.message });
+        });
+
+        req.setTimeout(20000, () => {
+          req.destroy();
+          done({ success: false, error: 'Timeout: GitHub non ha risposto entro 20s. Controlla la connessione.' });
+        });
+
+        req.on('error', (err) => {
+          done({ success: false, error: 'Errore di connessione a GitHub: ' + err.message });
         });
       });
     } catch (e) {
@@ -202,32 +222,75 @@ function setupUpdaterIpc() {
       const tempPath = finalPath + '.tmp';
 
       return new Promise((resolve) => {
-        let startTime = Date.now();
         let lastTime = Date.now();
         let lastBytes = 0;
 
+        const CONNECT_TIMEOUT_MS = 30000;
+        const STALL_TIMEOUT_MS   = 60000;
+        let settled = false;
+        let activeReq = null;
+        let stallTimer = null;
+
+        const cleanupTimers = () => {
+          if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }
+        };
+
+        const finish = (result) => {
+          if (settled) return;
+          settled = true;
+          cleanupTimers();
+          try { if (activeReq) activeReq.destroy(); } catch (e) {}
+          resolve(result);
+        };
+
+        const failAndCleanup = (message) => {
+          try { fs.unlinkSync(tempPath); } catch (e) {}
+          finish({ success: false, error: message });
+        };
+
+        const armStallWatchdog = () => {
+          cleanupTimers();
+          stallTimer = setTimeout(() => {
+            failAndCleanup(`Download interrotto: nessun dato ricevuto per ${STALL_TIMEOUT_MS / 1000}s. Riprova o controlla la connessione.`);
+          }, STALL_TIMEOUT_MS);
+        };
+
         function followAndStream(currentUrl, maxRedirects = 10) {
+          if (settled) return;
           if (maxRedirects <= 0) {
-            resolve({ success: false, error: 'Superato il limite massimo di reindirizzamenti HTTP' });
+            finish({ success: false, error: 'Superato il limite massimo di reindirizzamenti HTTP' });
             return;
           }
 
-          const parsed = new URL(currentUrl);
+          let parsed;
+          try {
+            parsed = new URL(currentUrl);
+          } catch (e) {
+            finish({ success: false, error: 'URL di download non valido' });
+            return;
+          }
           const lib = parsed.protocol === 'https:' ? https : http;
 
           const req = lib.get(currentUrl, { headers: { 'User-Agent': 'SimulatorePreventivi-Updater' } }, (res) => {
             if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 303 || res.statusCode === 307 || res.statusCode === 308) {
               const redirectUrl = res.headers.location;
+              res.resume();
               if (redirectUrl) {
                 followAndStream(redirectUrl, maxRedirects - 1);
-                return;
+              } else {
+                finish({ success: false, error: 'Reindirizzamento HTTP senza destinazione (header Location assente)' });
               }
+              return;
             }
 
             if (res.statusCode !== 200) {
-              resolve({ success: false, error: `Risposta del server HTTP non valida: ${res.statusCode}` });
+              res.resume();
+              finish({ success: false, error: `Risposta del server HTTP non valida: ${res.statusCode}` });
               return;
             }
+
+            req.setTimeout(0);
+            armStallWatchdog();
 
             const totalBytes = parseInt(res.headers['content-length'] || expectedSize, 10);
             let receivedBytes = 0;
@@ -236,6 +299,7 @@ function setupUpdaterIpc() {
             res.pipe(fileStream);
 
             res.on('data', (chunk) => {
+              armStallWatchdog();
               receivedBytes += chunk.length;
               const now = Date.now();
               const elapsedSec = (now - lastTime) / 1000;
@@ -260,11 +324,16 @@ function setupUpdaterIpc() {
               }
             });
 
+            res.on('error', (err) => {
+              failAndCleanup('Errore di rete durante la ricezione: ' + err.message);
+            });
+
             fileStream.on('finish', () => {
+              cleanupTimers();
               fileStream.close(async () => {
+                if (settled) return;
                 if (expectedSize > 0 && receivedBytes !== expectedSize) {
-                  try { fs.unlinkSync(tempPath); } catch(e) {}
-                  resolve({ success: false, error: `Corruzione dati rilevata: ricevuti ${receivedBytes} byte su ${expectedSize} attesi` });
+                  failAndCleanup(`Corruzione dati rilevata: ricevuti ${receivedBytes} byte su ${expectedSize} attesi`);
                   return;
                 }
 
@@ -272,7 +341,11 @@ function setupUpdaterIpc() {
                   const hash = crypto.createHash('sha256');
                   const input = fs.createReadStream(tempPath);
                   input.on('data', chunk => hash.update(chunk));
+                  input.on('error', (errRead) => {
+                    failAndCleanup('Errore nella lettura del pacchetto per la verifica: ' + errRead.message);
+                  });
                   input.on('end', () => {
+                    if (settled) return;
                     const sha256 = hash.digest('hex');
                     if (fs.existsSync(finalPath)) {
                       try { fs.unlinkSync(finalPath); } catch(e) {}
@@ -280,23 +353,27 @@ function setupUpdaterIpc() {
                     fs.renameSync(tempPath, finalPath);
                     shell.openPath(finalPath);
                     setTimeout(() => app.quit(), 1500);
-                    resolve({ success: true, sha256, size: receivedBytes, path: finalPath });
+                    finish({ success: true, sha256, size: receivedBytes, path: finalPath });
                   });
                 } catch (errHash) {
-                  resolve({ success: false, error: 'Errore nella verifica dell\'impronta SHA-256: ' + errHash.message });
+                  failAndCleanup('Errore nella verifica dell\'impronta SHA-256: ' + errHash.message);
                 }
               });
             });
 
             fileStream.on('error', (err) => {
-              try { fs.unlinkSync(tempPath); } catch(e) {}
-              resolve({ success: false, error: 'Errore durante la scrittura del file temporaneo: ' + err.message });
+              failAndCleanup('Errore durante la scrittura del file temporaneo: ' + err.message);
             });
           });
 
+          activeReq = req;
+
+          req.setTimeout(CONNECT_TIMEOUT_MS, () => {
+            failAndCleanup(`Timeout di connessione: il server non ha risposto entro ${CONNECT_TIMEOUT_MS / 1000}s.`);
+          });
+
           req.on('error', (err) => {
-            try { fs.unlinkSync(tempPath); } catch(e) {}
-            resolve({ success: false, error: 'Errore di connessione durante il download: ' + err.message });
+            failAndCleanup('Errore di connessione durante il download: ' + err.message);
           });
         }
 

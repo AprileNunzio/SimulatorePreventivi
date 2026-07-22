@@ -4,6 +4,22 @@ Tutte le modifiche rilevanti apportate alla piattaforma **Simulatore Preventivi 
 
 ---
 
+## [3.4.2] — 2026-07-22
+
+### 🐞 Correzioni
+- **Impostazioni**: risolto crash `ReferenceError: s is not defined` — le impostazioni aziendali non venivano caricate nella `render()` (regressione 3.4.1). La pagina si apre di nuovo.
+- **Auto-Updater**: risolto il blocco in download. Aggiunti timeout di connessione (30s) e watchdog di stallo (60s) lato main, drenaggio dei redirect e gestione errori completa; il check aggiornamenti ha timeout 20s e gestione rate-limit GitHub. Lato UI il listener di progresso è ora registrato una sola volta (niente accumulo).
+- **POS Cassa Touch**: risolti i contrasti e i problemi grafici del tema chiaro (tema di default). Il blocco CSS light-mode targetizzava classi inesistenti, lasciando testo chiaro su sfondo chiaro (nomi prodotto invisibili). Selettori riallineati al markup reale e contrasti conformi in entrambi i temi.
+
+### 📚 Documentazione
+- Aggiunta **Gap Analysis** completa (`docs/GAP_ANALYSIS.md`) e **Implementation Plan** a fasi (`docs/IMPLEMENTATION_PLAN.md`).
+- README allineato allo stato reale del prodotto (generazione FatturaPA vs trasmissione SdI in roadmap).
+
+### 🧹 Manutenzione
+- Rimosso file residuo `preventivo-detail.js.bak`; `.gitignore` irrobustito.
+
+---
+
 ## [2.2.0] — 2026-07-22
 
 ### 🏗️ Architettura Microservizi Enterprise

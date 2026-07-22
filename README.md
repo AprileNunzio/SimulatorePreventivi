@@ -52,10 +52,20 @@ graph TD
 | **Preventivazione Avanzata** | Workflow stati (*Preventivo -> Revisione -> Ordine di Vendita*), sconti, spese accessorie e calcolo margine lordo/netto in tempo reale. |
 | **Magazzino & PMP** | Registro movimenti atomici (`carico`, `scarico`, `reso`, `rettifica`), valorizzazione a **Prezzo Medio Ponderato (PMP)** e avvisi scorta minima. |
 | **Logistica & DDT** | Generazione Documenti di Trasporto (DDT), gestione merci in viaggio, resa porto/vettore e aggregazione per **Fatturazione Differita (`TD24`)**. |
-| **Fatturazione Elettronica** | Tracciato **FatturaPA v1.2.2** (`TD01`-`TD06`, `TD24`), gestione **Multi-IVA per riga**, Natura IVA (`N1`..`N7`), Ritenuta d'Acconto e Cassa Previdenziale (`TC03`). |
-| **Tesoreria & Scadenzario** | Piani di rateizzazione incassi/pagamenti, monitoraggio scadenze aperte/scadute, solleciti e registrazione Prima Nota finanziaria. |
+| **Generazione FatturaPA** | Generazione del tracciato **FatturaPA v1.2.2** (`TD01`-`TD06`, `TD24`), **Multi-IVA per riga**, Natura IVA (`N1`..`N7`), Ritenuta d'Acconto e Cassa Previdenziale (`TC03`). La **trasmissione allo SdI** è in roadmap tramite adapter verso canale accreditato (vedi Documentazione tecnica). |
+| **Tesoreria & Scadenzario** | Piani di rateizzazione incassi/pagamenti, monitoraggio scadenze aperte/scadute e registrazione Prima Nota finanziaria. |
 | **Collaboratori & Provvigioni** | Assegnazione lavori su commessa, tracciamento commissioni fisse o percentuali e ledger pagamenti dedicati. |
-| **Sicurezza & Backup** | Cifratura bidirezionale del database locale con algoritmo **AES-256-GCM**, backup automatici e sincronizzazione cloud. |
+| **Sicurezza & Backup** | Cifratura del database locale, backup automatici locali e sincronizzazione cloud opzionale (MySQL/FTP). |
+
+---
+
+## 📚 Documentazione tecnica
+
+- **[Gap Analysis](docs/GAP_ANALYSIS.md)** — stato reale del prodotto e distanza da un gestionale universale production-ready.
+- **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** — architettura a micro-moduli, convenzioni di codice e roadmap a fasi.
+- **[Changelog](.github/CHANGELOG.md)** · **[Contributing](.github/CONTRIBUTING.md)** · **[Security Policy](.github/SECURITY.md)**
+
+> ⚠️ **Stato del prodotto:** funzionalità di generazione documenti e gestione operativa complete; gli adempimenti fiscali con trasmissione reale (SdI, corrispettivi telematici, registri IVA) sono in roadmap. Consultare la Gap Analysis prima di ogni uso in contesto fiscale.
 
 ---
 
@@ -81,6 +91,8 @@ npm run dev
 
 npm run build
 ```
+
+**Convenzioni di progetto:** codice senza commenti (solo codice puro), micro-moduli a singola responsabilità, confini di dominio netti. Dettagli in [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 
 ---
 
