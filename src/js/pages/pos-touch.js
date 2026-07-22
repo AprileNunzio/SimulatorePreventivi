@@ -11,11 +11,12 @@ let selectedCategoriaId = 'ALL';
 let scontriniSospesi = [];
 let posConfig = null;
 
-if (!window.currentUser) {
-  window.currentUser = { username: 'admin', nome: 'Amministratore', ruolo: 'admin' };
-}
-
 export async function render(container) {
+  if (!window.currentUser) {
+    container.innerHTML = '<div style="padding:60px;text-align:center;color:var(--text-muted)">Sessione non autenticata. Effettua nuovamente il login.</div>';
+    return;
+  }
+
   posConfig = await window.electronAPI.getPosConfig() || {};
 
   container.innerHTML = `

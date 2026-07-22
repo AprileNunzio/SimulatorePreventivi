@@ -16,14 +16,10 @@ const ROLE_COLORS = {
 let _keydownHandler = null;
 
 export async function showLoginScreen() {
+  window.currentUser = null;
   const employees = await window.electronAPI.getAllEmployees() || [];
   activeEmployees = employees.filter(e => e.attivo);
 
-  // Solo admin di default → accesso automatico senza schermata
-  if (activeEmployees.length === 1 && activeEmployees[0].username === 'admin') {
-    window.currentUser = activeEmployees[0];
-    return;
-  }
   if (activeEmployees.length === 0) return;
 
   renderSelectScreen();
