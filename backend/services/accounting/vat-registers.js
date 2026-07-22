@@ -76,4 +76,34 @@ function calcolaLiquidazione(registroVendite, registroAcquisti) {
   };
 }
 
-module.exports = { buildRegistroIva, calcolaLiquidazione, round2 };
+function mapFatturaToDocumento(fattura, voci = []) {
+  const perAliquota = new Map();
+  (voci || []).forEach(v => {
+    const aliquota = Number(v.aliquota_iva) || 0;
+    const natura = v.natura_iva || '';
+    const imponibile = round2(
+      v.totale_riga != null
+        ? Number(v.totale_riga)
+        : (Number(v.prezzo_unitario) || 0) * (Number(v.quantita) || 1) * (1 - (Number(v.sconto_percentuale) || 0) / 100)
+    );
+    const key = `${aliquota}_${natura}`;
+    const curr = perAliquota.get(key) || { aliquota, natura, imponibile: 0, imposta: 0 };
+    curr.imponibile = round2(curr.imponibile + imponibile);
+    curr.imposta = round2(curr.imponibile * aliquota / 100);
+    perAliquota.set(key, curr);
+  });
+
+  return {
+    numero: fattura.numero,
+    data: fattura.data_fattura,
+    controparte: fattura.cliente_ragione_sociale || fattura.cliente_nome || '',
+    righeIva: Array.from(perAliquota.values())
+  };
+}
+
+function buildRegistroFromFatture(fatture = [], vociByFatturaId = {}, periodo = null) {
+  const documenti = fatture.map(f => mapFatturaToDocumento(f, vociByFatturaId[f.id] || []));
+  return buildRegistroIva(documenti, periodo);
+}
+
+module.exports = { buildRegistroIva, calcolaLiquidazione, mapFatturaToDocumento, buildRegistroFromFatture, round2 };
