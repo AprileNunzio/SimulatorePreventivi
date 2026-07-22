@@ -27,6 +27,11 @@ export default {
           <div class="export-mode-title">Archivio Excel</div>
           <div class="export-mode-desc">Apri la cartella di sistema degli Excel</div>
         </div>
+        <div class="export-mode-card" id="m-btn-gen-fornitori" style="cursor:pointer;grid-column:1/-1">
+          <div class="export-mode-icon">🏭</div>
+          <div class="export-mode-title">Esporta per Fornitore</div>
+          <div class="export-mode-desc">Genera un ordine di acquisto diviso per fornitore, con modello e quantità da ordinare per ciascuno</div>
+        </div>
       </div>
     `, `<button class="btn btn-ghost" onclick="Modal.close()">Chiudi</button>`);
 
@@ -44,6 +49,21 @@ export default {
     document.getElementById('m-btn-dir-excel')?.addEventListener('click', () => {
       window.electronAPI.openDir('excel');
     });
+    document.getElementById('m-btn-gen-fornitori')?.addEventListener('click', () => {
+      Modal.close();
+      this.exportSupplierOrder(prevId);
+    });
+  },
+  async exportSupplierOrder(prevId) {
+    const id = prevId || this.data?.id;
+    toast('Generazione ordine per fornitore in corso...', 'info', 5000);
+    const res = await window.electronAPI.generateSupplierOrder(id);
+    if (res.success) {
+      toast('Ordine per fornitore generato con successo!', 'success');
+      window.electronAPI.showItemInFolder(res.filePath);
+    } else {
+      toast('Errore: ' + res.error, 'error');
+    }
   },
   async exportPdf(prevId) {
     const prev = await window.electronAPI.getPreventivoById(prevId || this.data?.id);

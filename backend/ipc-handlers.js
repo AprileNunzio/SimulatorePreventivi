@@ -826,6 +826,15 @@ function setupIpcHandlers(ipcMain) {
     }
   });
 
+  const supplierOrderService = require('./services/procurement/supplier-order-service');
+  ipcMain.handle('procurement:generateSupplierOrder', async (e, preventivoId, opzioni) => {
+    try {
+      return await supplierOrderService.generateSupplierOrderForPreventivo(preventivoId, opzioni);
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
   ipcMain.handle('email:send', async (e, data) => {
     try {
       const pdfRes = await generatePdf({

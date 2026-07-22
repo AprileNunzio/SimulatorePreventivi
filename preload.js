@@ -78,6 +78,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeLogo: () => ipcRenderer.invoke('settings:remove-logo'),
 
   generatePdf: (data) => ipcRenderer.invoke('pdf:generate', data),
+  generateSupplierOrder: (preventivoId, opzioni) => ipcRenderer.invoke('procurement:generateSupplierOrder', preventivoId, opzioni),
   generateExcel: (data) => ipcRenderer.invoke('excel:generate', data),
 
   exportBackup: () => ipcRenderer.invoke('backup:export'),
