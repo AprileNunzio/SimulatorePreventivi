@@ -1203,6 +1203,7 @@ function setupIpcHandlers(ipcMain) {
 
   const vatReport = require('./services/accounting/vat-report-service');
   ipcMain.handle('accounting:registroIvaVendite', async (e, periodo) => vatReport.registroIvaVendite(periodo));
+  ipcMain.handle('accounting:registroIvaAcquisti', async (e, periodo) => vatReport.registroIvaAcquisti(periodo));
   ipcMain.handle('accounting:liquidazioneIva', async (e, periodo) => vatReport.liquidazioneIva(periodo));
   ipcMain.handle('passive:importXml', async (e, xmlContent) => passiveInvoices.parseAndImportPassiveXml(xmlContent));
   const posConfig = require('./services/pos/pos-config');

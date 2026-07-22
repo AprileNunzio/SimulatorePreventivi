@@ -41,3 +41,11 @@ test('la migrazione 1 crea gli indici di prestazione attesi', async () => {
   assert.ok(nomi.includes('idx_transazioni_fattura'));
   db.close();
 });
+
+test('la migrazione 2 crea la tabella fatture_passive', async () => {
+  const db = await creaDb();
+  runMigrations(db);
+  const res = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='fatture_passive'");
+  assert.ok(res.length && res[0].values.length === 1);
+  db.close();
+});

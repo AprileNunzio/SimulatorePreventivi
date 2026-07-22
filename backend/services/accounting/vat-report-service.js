@@ -15,9 +15,33 @@ function registroIvaVendite(periodo = null) {
   return buildRegistroFromFatture(fatture, vociByFattura, periodo);
 }
 
+function registroIvaAcquisti(periodo = null) {
+  let rows = [];
+  try {
+    rows = core.all('SELECT * FROM fatture_passive ORDER BY data');
+  } catch (e) {
+    rows = [];
+  }
+  const documenti = (rows || []).map(r => {
+    let righeIva = [];
+    try {
+      righeIva = JSON.parse(r.riepilogo_json || '[]');
+    } catch (e) {
+      righeIva = [];
+    }
+    return {
+      numero: r.numero,
+      data: r.data,
+      controparte: r.fornitore_nome || '',
+      righeIva
+    };
+  });
+  return buildRegistroIva(documenti, periodo);
+}
+
 function liquidazioneIva(periodo = null) {
   const vendite = registroIvaVendite(periodo);
-  const acquisti = { righe: [], riepilogoAliquote: [], totali: { imponibile: 0, imposta: 0 } };
+  const acquisti = registroIvaAcquisti(periodo);
   return {
     vendite,
     acquisti,
@@ -25,4 +49,4 @@ function liquidazioneIva(periodo = null) {
   };
 }
 
-module.exports = { registroIvaVendite, liquidazioneIva };
+module.exports = { registroIvaVendite, registroIvaAcquisti, liquidazioneIva };
