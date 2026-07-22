@@ -12,6 +12,7 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
+    "test": "node --test \"tests/**/*.test.js\"",
     "build": "electron-builder --win",
     "build:publish": "npm version patch && electron-builder --win --publish always",
     "build:publish-draft": "npm version patch && electron-builder --win --publish never"
