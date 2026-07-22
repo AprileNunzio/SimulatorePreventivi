@@ -26,12 +26,13 @@
 - [x] 1.5 Input barcode: min-height 54px, font 17px; status tag ricentrata.
 - [x] 1.6 Scrollbar webkit spesse (14px/10px) su liste e categorie.
 
-### Batch 2 — Interazione carrello veloce + header (JS+CSS) — STATO: DA FARE
-- [ ] 2.1 Stepper +/- grande direttamente su ogni riga scontrino.
-- [ ] 2.2 Tasto elimina riga ingrandito (≥44px) e ben distanziato.
-- [ ] 2.3 Riga scontrino piu alta e leggibile su touch.
-- [ ] 2.4 Pulsanti header (Sospesi/Reparti/Fullscreen/Chiusura Z) touch-friendly via classe.
-- [ ] 2.5 Pulsanti Sospendi/Svuota del carrello touch-friendly.
+### Batch 2 — Interazione carrello veloce + header (JS+CSS) — STATO: ✅ FATTO (commit)
+- [x] 2.1 Stepper +/- (`.pos-qty-btn` 38px) su ogni riga; step 0.5 per kg, 1 per pz.
+- [x] 2.2 Tasto elimina `.pos-row-del` 40px; colonna dedicata 46px.
+- [x] 2.3 Colonna Qta allargata a 120px; valore + unita su due righe.
+- [x] 2.4 Header: classe `.pos-header-btn` (min-height 46px) su tutti i pulsanti.
+- [x] 2.5 Sospendi/Svuota: classe `.pos-cart-mini-btn` (min-height 44px).
+- Nota: `decQty` sotto zero rimuove la riga; `changeQty` ricalcola totale_riga.
 
 ### Batch 3 — Checkout piu semplice e veloce (JS) — STATO: DA FARE
 - [ ] 3.1 Tendering contanti: tagli completi (5/10/20/50/100/200) + "ESATTO".
@@ -50,5 +51,6 @@
 ## Log di avanzamento
 _(voce piu recente in alto; ogni batch completato = commit)_
 
+- 2026-07-22 — **Batch 2 completato** (stepper +/- riga carrello, delete grande, header touch, Sospendi/Svuota). JS check OK, CSS 101/101. Prossimo: Batch 3 (tendering contanti veloce).
 - 2026-07-22 — **Batch 1 completato** (CSS touch sizing: numpad, chip, reparti, card, pagamento, barcode, scrollbar). CSS bilanciato 89/89. Prossimo: Batch 2 (stepper carrello + header touch).
 - 2026-07-22 — Creato worklog e piano. Diagnosi completata su `pos-touch.js` (924 righe). Prossimo: Batch 1.

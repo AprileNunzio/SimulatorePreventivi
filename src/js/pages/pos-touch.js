@@ -29,31 +29,24 @@ export async function render(container) {
         </div>
         
         <div style="display:flex; align-items:center; gap:8px;">
-          <!-- Codice Cassiere / Login Operatore -->
-          <div onclick="window.PosTouch.cambiaCassiere()" 
-               title="Clicca per cambio veloce operatore / PIN"
-               style="background:rgba(30,41,59,0.9); border:1px solid rgba(255,255,255,0.12); padding:5px 12px; border-radius:8px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:6px;">
-            <span style="color:#64748b;">OPERATORE:</span>
-            <strong id="cassiere-label" style="color:#60a5fa; font-family:monospace; font-size:13px;">${window.currentUser.nome} (${window.currentUser.ruolo.toUpperCase()})</strong>
-          </div>
+          <button class="pos-header-btn" onclick="window.PosTouch.cambiaCassiere()" title="Cambio veloce operatore / PIN" style="background:rgba(30,41,59,0.9); color:#60a5fa;">
+            <span style="color:#94a3b8; font-weight:600;">OPERATORE:</span>
+            <strong id="cassiere-label" style="color:#60a5fa; font-family:monospace;">${window.currentUser.nome} (${window.currentUser.ruolo.toUpperCase()})</strong>
+          </button>
 
-          <!-- Scontrini Sospesi Badge -->
-          <button class="btn btn-secondary" id="btn-scontrini-sospesi" style="background:#334155; color:white; border:none; padding:5px 10px; font-size:12px;">
+          <button class="pos-header-btn" id="btn-scontrini-sospesi" style="background:#334155; color:white; border:none;">
             ⏸ Sospesi (<span id="count-sospesi">0</span>)
           </button>
 
-          <!-- Configurazione Reparti & Cassa -->
-          <button class="btn btn-secondary" id="btn-config-pos" title="Configura Cassa e Reparti" style="background:#1e293b; color:#f59e0b; border:1px solid rgba(255,255,255,0.1); padding:5px 10px; font-size:12px; font-weight:700;">
+          <button class="pos-header-btn" id="btn-config-pos" title="Configura Cassa e Reparti" style="background:#1e293b; color:#f59e0b;">
             ⚙ Reparti & Cassa
           </button>
 
-          <!-- Tasto FullScreen -->
-          <button class="btn btn-secondary" id="btn-fullscreen-pos" title="Schermo Intero" style="background:#1e293b; color:#60a5fa; border:1px solid rgba(255,255,255,0.1); padding:5px 10px; font-size:12px; font-weight:700;">
-            ⛶ FULLSCREEN
+          <button class="pos-header-btn" id="btn-fullscreen-pos" title="Schermo Intero" style="background:#1e293b; color:#60a5fa;">
+            ⛶ Fullscreen
           </button>
 
-          <!-- Chiusura Z -->
-          <button class="btn btn-secondary" id="btn-chiusura-z" style="background:#dc2626; color:white; border:none; font-weight:700; padding:5px 12px; font-size:12px;">
+          <button class="pos-header-btn" id="btn-chiusura-z" style="background:#dc2626; color:white; border:none;">
             Chiusura Z
           </button>
         </div>
@@ -70,9 +63,9 @@ export async function render(container) {
               <h3 style="font-size:15px; font-weight:800; margin:0; color:#f8fafc;">Scontrino in Corso</h3>
               <div style="font-size:11px; color:#64748b;" id="cart-item-count">0 articoli inseriti</div>
             </div>
-            <div style="display:flex; gap:6px;">
-              <button class="btn btn-sm" id="btn-sospendi-scontrino" style="background:#f59e0b; color:black; font-weight:700; padding:4px 8px; font-size:11px;">Sospendi</button>
-              <button class="btn btn-sm" id="btn-svuota-carrello" style="background:rgba(239,68,68,0.2); color:#f87171; border:none; padding:4px 8px; font-size:11px;">Svuota</button>
+            <div style="display:flex; gap:8px;">
+              <button class="pos-cart-mini-btn" id="btn-sospendi-scontrino" style="background:#f59e0b; color:black;">Sospendi</button>
+              <button class="pos-cart-mini-btn" id="btn-svuota-carrello" style="background:rgba(239,68,68,0.2); color:#f87171;">Svuota</button>
             </div>
           </div>
 
@@ -91,10 +84,10 @@ export async function render(container) {
               <thead>
                 <tr>
                   <th>Prodotto</th>
-                  <th style="width:65px; text-align:center;">Qta/Kg</th>
-                  <th style="width:65px; text-align:right;">Prezzo</th>
-                  <th style="width:65px; text-align:right;">Totale</th>
-                  <th style="width:20px;"></th>
+                  <th style="width:120px; text-align:center;">Qta/Kg</th>
+                  <th style="width:58px; text-align:right;">Prezzo</th>
+                  <th style="width:62px; text-align:right;">Totale</th>
+                  <th style="width:46px;"></th>
                 </tr>
               </thead>
               <tbody id="cart-tbody">
@@ -222,6 +215,8 @@ export async function render(container) {
       selectedCartIndex = idx;
       renderCartUI();
     },
+    incQty: (idx) => changeQty(idx, 1),
+    decQty: (idx) => changeQty(idx, -1),
     cambiaCassiere: openModalCambioOperatore,
     pressNum: (n) => {
       if (n === '.' && numpadBuffer.includes('.')) return;
@@ -463,6 +458,22 @@ function addProdottoToCart(prodottoId, qty = 1) {
   renderCartUI();
 }
 
+function changeQty(index, delta) {
+  const item = currentCart[index];
+  if (!item) return;
+  const step = item.unita_misura && item.unita_misura.toLowerCase() === 'kg' ? 0.5 : 1;
+  const nuova = Math.round((item.quantita + delta * step) * 1000) / 1000;
+  if (nuova <= 0) {
+    removeProdottoFromCart(index);
+    return;
+  }
+  item.quantita = nuova;
+  const subtotal = item.quantita * item.prezzo_unitario;
+  item.totale_riga = subtotal - (subtotal * (item.sconto_percentuale / 100));
+  selectedCartIndex = index;
+  renderCartUI();
+}
+
 function removeProdottoFromCart(index) {
   currentCart.splice(index, 1);
   if (selectedCartIndex >= currentCart.length) selectedCartIndex = currentCart.length - 1;
@@ -498,17 +509,25 @@ function renderCartUI() {
     totaleGenerale += item.totale_riga;
     const isSel = idx === selectedCartIndex;
 
+    const qtaLabel = Number.isInteger(item.quantita) ? item.quantita : item.quantita.toFixed(3).replace(/\.?0+$/, '');
+
     return `
       <tr class="${isSel ? 'selected' : ''}" onclick="window.PosTouch.selectCartRow(${idx})" style="cursor:pointer;">
         <td>
           <strong style="color:${isSel ? '#60a5fa' : '#f8fafc'};">${item.descrizione}</strong>
           ${item.sconto_percentuale > 0 ? `<div style="font-size:10px; color:#f59e0b;">Sconto -${item.sconto_percentuale}%</div>` : ''}
         </td>
-        <td style="text-align:center;"><strong>${item.quantita}</strong> <span style="font-size:10px; color:#94a3b8;">${item.unita_misura}</span></td>
+        <td>
+          <div class="pos-qty-stepper">
+            <button class="pos-qty-btn" onclick="event.stopPropagation(); window.PosTouch.decQty(${idx})">−</button>
+            <span class="pos-qty-val">${qtaLabel}<span style="display:block; font-size:9px; color:#94a3b8; font-weight:600;">${item.unita_misura}</span></span>
+            <button class="pos-qty-btn" onclick="event.stopPropagation(); window.PosTouch.incQty(${idx})">+</button>
+          </div>
+        </td>
         <td style="text-align:right;">€ ${item.prezzo_unitario.toFixed(2)}</td>
         <td style="text-align:right;"><strong>€ ${item.totale_riga.toFixed(2)}</strong></td>
-        <td>
-          <button class="btn btn-sm btn-danger" style="padding:1px 5px; font-size:11px; font-weight:700;" onclick="event.stopPropagation(); window.PosTouch.removeFromCart(${idx})">×</button>
+        <td style="text-align:center;">
+          <button class="pos-row-del" onclick="event.stopPropagation(); window.PosTouch.removeFromCart(${idx})">×</button>
         </td>
       </tr>
     `;
